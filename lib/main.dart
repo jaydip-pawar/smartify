@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:smartify/screens/forgot_password_screen.dart';
 import 'package:smartify/screens/home_screen.dart';
 import 'package:smartify/screens/login_screen.dart';
 import 'package:smartify/screens/navigation_screen.dart';
+import 'package:smartify/screens/select_country_screen.dart';
 import 'package:smartify/screens/sign_up_screen.dart';
 import 'package:smartify/screens/splash_screen.dart';
 import 'package:smartify/theme.dart';
@@ -59,6 +61,8 @@ class _MyAppState extends State<MyApp> {
         LoginScreen.id : (context) => LoginScreen(),
         SignUpScreen.id : (context) => SignUpScreen(),
         HomeScreen.id : (context) => HomeScreen(),
+        ForgotPasswordScreen.id : (context) => ForgotPasswordScreen(),
+        SelectCountryScreen.id : (context) => SelectCountryScreen(),
       },
     );
   }
