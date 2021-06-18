@@ -2,6 +2,7 @@ import 'package:email_validator/email_validator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:smartify/screens/select_country_screen.dart';
+import 'package:smartify/screens/verify_user_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   static const String id = 'signup-screen';
@@ -175,12 +176,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   void getCountry() async {
-    final countryName =
-        await Navigator.pushNamed(context, SelectCountryScreen.id);
-    setState(() {
-      country = countryName.toString();
-    });
+    final countryName = await Navigator.pushNamed(context, SelectCountryScreen.id);
+    if(countryName != null) {
+      setState(() {
+        country = countryName.toString();
+      });
+    }
   }
 
-  void getCode() {}
+  void getCode() {
+    Navigator.pushNamed(context, VerifyUserScreen.id);
+  }
 }

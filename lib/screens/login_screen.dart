@@ -306,9 +306,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void getCountry() async {
     final countryName = await Navigator.pushNamed(context, SelectCountryScreen.id);
-    setState(() {
-      country = countryName.toString();
-    });
+    if(countryName != null) {
+      setState(() {
+        country = countryName.toString();
+      });
+    }
   }
 
 }

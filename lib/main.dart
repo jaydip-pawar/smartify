@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smartify/screens/country_search_screen.dart';
 import 'package:smartify/screens/forgot_password_screen.dart';
 import 'package:smartify/screens/home_screen.dart';
 import 'package:smartify/screens/login_screen.dart';
@@ -6,6 +7,7 @@ import 'package:smartify/screens/navigation_screen.dart';
 import 'package:smartify/screens/select_country_screen.dart';
 import 'package:smartify/screens/sign_up_screen.dart';
 import 'package:smartify/screens/splash_screen.dart';
+import 'package:smartify/screens/verify_user_screen.dart';
 import 'package:smartify/theme.dart';
 
 void main() {
@@ -63,6 +65,8 @@ class _MyAppState extends State<MyApp> {
         HomeScreen.id : (context) => HomeScreen(),
         ForgotPasswordScreen.id : (context) => ForgotPasswordScreen(),
         SelectCountryScreen.id : (context) => SelectCountryScreen(),
+        VerifyUserScreen.id : (context) => VerifyUserScreen(),
+        CountrySearchScreen.id : (context) => CountrySearchScreen(),
       },
     );
   }
