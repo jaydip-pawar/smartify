@@ -1,34 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:smartify/providers/authenticationProvider.dart';
 import 'package:smartify/screens/country_search_screen.dart';
 import 'package:smartify/screens/forgot_password_screen.dart';
 import 'package:smartify/screens/home_screen.dart';
 import 'package:smartify/screens/login_screen.dart';
 import 'package:smartify/screens/navigation_screen.dart';
+import 'package:smartify/screens/not_getting_code_screen.dart';
 import 'package:smartify/screens/select_country_screen.dart';
 import 'package:smartify/screens/sign_up_screen.dart';
 import 'package:smartify/screens/splash_screen.dart';
 import 'package:smartify/screens/verify_user_screen.dart';
 import 'package:smartify/theme.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(MyApp()
-    // MultiProvider(
-    //   providers: [
-    //     ChangeNotifierProvider(
-    //       create: (_) => AuthenticationProvider(),
-    //     ),
-    //     ChangeNotifierProvider(
-    //       create: (_) => LocationProvider(),
-    //     ),
-    //     ChangeNotifierProvider(
-    //       create: (_) => StoreProvider(),
-    //     ),
-    //     ChangeNotifierProvider(
-    //       create: (_) => CartProvider(),
-    //     ),
-    //   ],
-    //   child: MyApp(),
-    // ),
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => AuthenticationProvider(),
+        ),
+      ],
+      child: MyApp(),
+    ),
   );
 }
 
@@ -67,6 +61,7 @@ class _MyAppState extends State<MyApp> {
         SelectCountryScreen.id : (context) => SelectCountryScreen(),
         VerifyUserScreen.id : (context) => VerifyUserScreen(),
         CountrySearchScreen.id : (context) => CountrySearchScreen(),
+        NotGetCode.id : (context) => NotGetCode(),
       },
     );
   }

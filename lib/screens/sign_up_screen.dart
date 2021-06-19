@@ -1,6 +1,8 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:smartify/providers/authenticationProvider.dart';
 import 'package:smartify/screens/select_country_screen.dart';
 import 'package:smartify/screens/verify_user_screen.dart';
 
@@ -14,7 +16,6 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   var _emailController = TextEditingController();
-  var _countryController = TextEditingController();
   String country = 'India';
 
   bool _emailFocused = false;
@@ -29,7 +30,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    final _authenticationProvider = Provider.of<AuthenticationProvider>(context);
+
+    void getCode() {
+      _authenticationProvider.signUpDetails(country, _emailController.text);
+      Navigator.pushNamed(context, VerifyUserScreen.id);
+    }
+
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(CupertinoIcons.back),
@@ -59,7 +69,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               onTap: () {
                 getCountry();
               },
-              controller: _countryController,
               readOnly: true,
               decoration: InputDecoration(
                 contentPadding: EdgeInsets.only(top: 14),
@@ -182,9 +191,5 @@ class _SignUpScreenState extends State<SignUpScreen> {
         country = countryName.toString();
       });
     }
-  }
-
-  void getCode() {
-    Navigator.pushNamed(context, VerifyUserScreen.id);
   }
 }

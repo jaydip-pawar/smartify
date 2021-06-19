@@ -12,78 +12,95 @@ class SelectCountryScreen extends StatefulWidget {
 }
 
 class _SelectCountryScreenState extends State<SelectCountryScreen> {
+  bool searching = false;
+  String country = '';
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(105),
-          child: Column(
-            children: [
-              Container(
-                width: width(context),
-                height: 50,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+          child: Hero(
+            tag: 'SearchBar',
+            child: Material(
+              child: Column(
+                children: [
+                  Container(
+                    width: width(context),
+                    height: 50,
+                    child: Stack(
+                      fit: StackFit.expand,
                       children: [
-                        Text(
-                          'Select Region',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                              fontSize: 17),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Select Region',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                  fontSize: 17),
+                            ),
+                          ],
                         ),
+                        Positioned(
+                          height: 50,
+                          width: 80,
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(color: Colors.black, fontSize: 17),
+                            ),
+                          ),
+                        )
                       ],
                     ),
-                    Positioned(
-                      height: 50,
-                      width: 80,
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: Text(
-                          'Cancel',
-                          style: TextStyle(color: Colors.black, fontSize: 17),
+                  ),
+                  Container(
+                    height: height(context) * 0.085,
+                    width: width(context),
+                    padding:
+                        EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
+                    child: TextField(
+                      onTap: () {
+                        getCountry();
+                      },
+                      textInputAction: TextInputAction.search,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        fillColor: Colors.grey[300],
+                        filled: true,
+                        prefixIcon: Icon(
+                          Icons.search,
+                          size: 18,
+                          color: Colors.grey,
+                        ),
+                        contentPadding: EdgeInsets.only(top: 14),
+                        hintStyle: TextStyle(color: Colors.grey, fontSize: 15),
+                        hintText: 'Search',
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(13)),
+                          borderSide: BorderSide.none,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(13)),
+                          borderSide: BorderSide.none,
                         ),
                       ),
-                    )
-                  ],
-                ),
-              ),
-              Container(
-                height: height(context) * 0.085,
-                width: width(context),
-                padding: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
-                child: TextField(
-                  onTap: () {
-                    Navigator.pushNamed(context, CountrySearchScreen.id);
-                  },
-                  textInputAction: TextInputAction.search,
-                  readOnly: true,
-                  decoration: InputDecoration(
-                    fillColor: Colors.grey[300],
-                    filled: true,
-                    prefixIcon: Icon(Icons.search, size: 18, color: Colors.grey,),
-                    contentPadding: EdgeInsets.only(top: 14),
-                    hintStyle: TextStyle(color: Colors.grey, fontSize: 15),
-                    hintText: 'Search',
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(13)),
-                      borderSide: BorderSide.none,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(13)),
-                      borderSide: BorderSide.none,
                     ),
                   ),
-                ),
+                  Divider(
+                    thickness: 1,
+                    height: 0,
+                  )
+                ],
               ),
-            ],
+            ),
           ),
         ),
         body: ListView.separated(
@@ -110,5 +127,15 @@ class _SelectCountryScreenState extends State<SelectCountryScreen> {
         ),
       ),
     );
+  }
+
+  void getCountry() async {
+    final countryName = await Navigator.pushNamed(context, CountrySearchScreen.id);
+    if(countryName != null) {
+      setState(() {
+        country = countryName.toString();
+      });
+    }
+    Navigator.pop(context, country);
   }
 }
