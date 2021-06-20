@@ -2,7 +2,10 @@ import 'package:code_input/code_input.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:smartify/constants.dart';
+import 'package:smartify/providers/authenticationProvider.dart';
+import 'package:smartify/screens/home_screen.dart';
 
 class OtpTextField extends StatefulWidget {
   final inputKey;
@@ -32,7 +35,15 @@ class _OtpTextFieldState extends State<OtpTextField> {
           ),
         );
       },
-      onFilled: (value) => print('Your input is $value.'),
+      onFilled: (otp) {
+        final _authenticationProvider = Provider.of<AuthenticationProvider>(context, listen: false);
+        _authenticationProvider.verifyOTP(otp).then((value) {
+          if(value)
+            Navigator.pushReplacementNamed(context, HomeScreen.id);
+          else
+            print('Wrong otp');
+        });
+      },
     );
   }
 }

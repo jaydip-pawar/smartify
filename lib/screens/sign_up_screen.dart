@@ -24,6 +24,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool visible = false;
   bool _emailFocused = false;
   bool isEmailValid = false;
+  bool errorSendOtp = false;
   FocusNode _passwordFocus = new FocusNode();
   FocusNode _emailFocus = new FocusNode();
 
@@ -36,12 +37,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _authenticationProvider =
-        Provider.of<AuthenticationProvider>(context);
+    final _authenticationProvider = Provider.of<AuthenticationProvider>(context);
 
     void getCode() {
       _authenticationProvider.signUpDetails(country, _emailController.text, _passwordController.text);
-      Navigator.pushNamed(context, VerifyUserScreen.id);
+      _authenticationProvider.sendOTP().then((value) {
+        if(value)
+          Navigator.pushNamed(context, VerifyUserScreen.id);
+        else
+          setState(() {
+            errorSendOtp = true;
+          });
+      });
+
     }
 
     return Scaffold(
@@ -191,9 +199,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     borderSide: BorderSide(color: Colors.grey),
                   )),
             ),
-            SizedBox(
-              height: 35,
+            SizedBox(height: 15),
+            Container(
+              child: Text(
+                'Something went wrong. Please try again...',
+                style: TextStyle(
+                    color: errorSendOtp ? Colors.red : Colors.white,
+                    fontSize: 12),
+              ),
             ),
+            SizedBox(height: 15),
             Container(
               height: 40,
               width: double.infinity,

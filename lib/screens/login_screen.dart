@@ -15,7 +15,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-
   var _emailController = TextEditingController();
   var _passwordController = TextEditingController();
   String country = 'India';
@@ -85,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   borderSide: BorderSide(color: Colors.grey),
                 ),
               ),
-            ),  //Country selection TextField
+            ), //Country selection TextField
             SizedBox(
               height: 15,
             ),
@@ -186,9 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     borderSide: BorderSide(color: Colors.grey),
                   )),
             ),
-            SizedBox(
-              height: 15,
-            ),
+            SizedBox(height: 15),
             Container(
               child: Text(
                 'Incorrect account ID or password',
@@ -197,9 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     fontSize: 12),
               ),
             ),
-            SizedBox(
-              height: 15,
-            ),
+            SizedBox(height: 15),
             Container(
               height: 40,
               width: double.infinity,
@@ -304,12 +299,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void getCountry() async {
-    final countryName = await Navigator.pushNamed(context, SelectCountryScreen.id);
-    if(countryName != null) {
+    final countryName =
+        await Navigator.pushNamed(context, SelectCountryScreen.id);
+    if (countryName != null) {
       setState(() {
         country = countryName.toString();
       });
     }
   }
-
 }

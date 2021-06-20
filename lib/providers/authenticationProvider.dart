@@ -1,9 +1,11 @@
+import 'package:email_auth/email_auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 
 class AuthenticationProvider with ChangeNotifier {
 
   String email = '', country = '', password = '';
+  String otp = '';
 
   signUpDetails(country, email, password) {
     this.country = country;
@@ -38,19 +40,37 @@ class AuthenticationProvider with ChangeNotifier {
   //   }
   // }
 
-  void signUp(String email, String password, BuildContext context) async {
+  Future<String> signUp(String email, String password, BuildContext context) async {
     try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
-        print('The password provided is too weak.');
+        return 'Weak Password';
       } else if (e.code == 'email-already-in-use') {
-        //email exists
+        return 'Email Already Exist';
       }
     } catch (e) {
       print(e);
+      return 'error';
     }
+    return 'Successful';
+  }
+
+  Future<bool> sendOTP() async {
+    EmailAuth.sessionName = 'Smartify';
+    var res = await EmailAuth.sendOtp(receiverMail: email);
+    if(!res) {
+      return false;
+    }
+    return true;
+  }
+
+  Future<bool> verifyOTP(String otp) async {
+    var res = EmailAuth.validate(receiverMail: email, userOTP: otp);
+    if(!res) {
+      return false;
+    }
+    return true;
   }
 
   void signOut() async {

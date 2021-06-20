@@ -26,7 +26,7 @@ class _VerifyUserScreenState extends State<VerifyUserScreen> {
     _timer = new Timer.periodic(oneSec, (Timer timer) {
       print(seconds);
       setState(
-        () {
+            () {
           if (seconds == 0) {
             timer.cancel();
           } else {
@@ -52,7 +52,7 @@ class _VerifyUserScreenState extends State<VerifyUserScreen> {
   @override
   Widget build(BuildContext context) {
     final _authenticationProvider =
-        Provider.of<AuthenticationProvider>(context);
+    Provider.of<AuthenticationProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -83,25 +83,26 @@ class _VerifyUserScreenState extends State<VerifyUserScreen> {
             RichText(
               text: TextSpan(
                 text:
-                    'A verification code has been sent to your email ${_authenticationProvider.email}  ',
+                'A verification code has been sent to your email ${_authenticationProvider.email}  ',
                 style: TextStyle(fontSize: 13, color: Colors.black54),
                 children: [
                   seconds == 0
                       ? TextSpan(
-                          text: 'Resend',
-                          style: TextStyle(fontSize: 13, color: Colors.blue),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () {
-                              setState(() {
-                                seconds = 59;
-                              });
-                              startTimer();
-                            },
-                        )
+                    text: 'Resend',
+                    style: TextStyle(fontSize: 13, color: Colors.blue),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () {
+                      _authenticationProvider.sendOTP();
+                        setState(() {
+                          seconds = 59;
+                        });
+                        startTimer();
+                      },
+                  )
                       : TextSpan(
-                          text: 'Resend(${seconds}s)',
-                          style: TextStyle(fontSize: 13, color: Colors.black54),
-                        ),
+                    text: 'Resend(${seconds}s)',
+                    style: TextStyle(fontSize: 13, color: Colors.black54),
+                  ),
                 ],
               ),
             ),
