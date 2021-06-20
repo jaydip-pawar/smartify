@@ -18,7 +18,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   var _emailController = TextEditingController();
   var _passwordController = TextEditingController();
-  var _countryController = TextEditingController();
   String country = 'India';
 
   bool _passwordFocused = false;
@@ -69,7 +68,6 @@ class _LoginScreenState extends State<LoginScreen> {
               onTap: () {
                 getCountry();
               },
-              controller: _countryController,
               readOnly: true,
               decoration: InputDecoration(
                 contentPadding: EdgeInsets.only(top: 14),

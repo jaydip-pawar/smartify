@@ -17,6 +17,7 @@ class VerifyUserScreen extends StatefulWidget {
 }
 
 class _VerifyUserScreenState extends State<VerifyUserScreen> {
+  Key _inputKey = new GlobalKey(debugLabel: 'inputText');
   var _timer;
   int seconds = 59;
 
@@ -75,7 +76,9 @@ class _VerifyUserScreenState extends State<VerifyUserScreen> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 35),
             ),
             SizedBox(height: 50),
-            Container(width: double.infinity, child: OtpTextField()),
+            Container(
+                width: double.infinity,
+                child: OtpTextField(inputKey: _inputKey)),
             SizedBox(height: 50),
             RichText(
               text: TextSpan(
@@ -110,10 +113,9 @@ class _VerifyUserScreenState extends State<VerifyUserScreen> {
               child: Text(
                 "Didn't get a code?",
                 style: TextStyle(
-                  color: Colors.blue,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600
-                ),
+                    color: Colors.blue,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600),
               ),
             )
           ],
