@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:smartify/providers/authenticationProvider.dart';
 import 'package:smartify/screens/not_getting_code_screen.dart';
 import 'package:smartify/widgets/otp_textfield.dart';
+import 'package:smartify/widgets/otp_timer.dart';
 
 class VerifyUserScreen extends StatefulWidget {
   static const String id = 'verify-user-screen';
@@ -17,42 +18,9 @@ class VerifyUserScreen extends StatefulWidget {
 }
 
 class _VerifyUserScreenState extends State<VerifyUserScreen> {
-  Key _inputKey = new GlobalKey(debugLabel: 'inputText');
-  var _timer;
-  int seconds = 59;
-
-  void startTimer() {
-    const oneSec = const Duration(seconds: 1);
-    _timer = new Timer.periodic(oneSec, (Timer timer) {
-      print(seconds);
-      setState(
-            () {
-          if (seconds == 0) {
-            timer.cancel();
-          } else {
-            seconds = seconds - 1;
-          }
-        },
-      );
-    });
-  }
-
-  @override
-  void initState() {
-    startTimer();
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
-    final _authenticationProvider =
-    Provider.of<AuthenticationProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -78,34 +46,9 @@ class _VerifyUserScreenState extends State<VerifyUserScreen> {
             SizedBox(height: 50),
             Container(
                 width: double.infinity,
-                child: OtpTextField(inputKey: _inputKey)),
+                child: OtpTextField()),
             SizedBox(height: 50),
-            RichText(
-              text: TextSpan(
-                text:
-                'A verification code has been sent to your email ${_authenticationProvider.email}  ',
-                style: TextStyle(fontSize: 13, color: Colors.black54),
-                children: [
-                  seconds == 0
-                      ? TextSpan(
-                    text: 'Resend',
-                    style: TextStyle(fontSize: 13, color: Colors.blue),
-                    recognizer: TapGestureRecognizer()
-                      ..onTap = () {
-                      _authenticationProvider.sendOTP();
-                        setState(() {
-                          seconds = 59;
-                        });
-                        startTimer();
-                      },
-                  )
-                      : TextSpan(
-                    text: 'Resend(${seconds}s)',
-                    style: TextStyle(fontSize: 13, color: Colors.black54),
-                  ),
-                ],
-              ),
-            ),
+            OTPTimer(),
             SizedBox(height: 25),
             GestureDetector(
               onTap: () {

@@ -1,4 +1,14 @@
 import 'package:flutter/cupertino.dart';
+import 'package:smartify/screens/country_search_screen.dart';
+import 'package:smartify/screens/forgot_password_screen.dart';
+import 'package:smartify/screens/home_screen.dart';
+import 'package:smartify/screens/login_screen.dart';
+import 'package:smartify/screens/navigation_screen.dart';
+import 'package:smartify/screens/not_getting_code_screen.dart';
+import 'package:smartify/screens/select_country_screen.dart';
+import 'package:smartify/screens/sign_up_screen.dart';
+import 'package:smartify/screens/splash_screen.dart';
+import 'package:smartify/screens/verify_user_screen.dart';
 
 double width(BuildContext context) {
   return MediaQuery.of(context).size.width;
@@ -7,6 +17,19 @@ double width(BuildContext context) {
 double height(BuildContext context) {
   return MediaQuery.of(context).size.height;
 }
+
+Map<String, Widget Function(BuildContext)> routes = {
+  SplashScreen.id : (context) => SplashScreen(),
+  NavigationScreen.id : (context) => NavigationScreen(),
+  LoginScreen.id : (context) => LoginScreen(),
+  SignUpScreen.id : (context) => SignUpScreen(),
+  HomeScreen.id : (context) => HomeScreen(),
+  ForgotPasswordScreen.id : (context) => ForgotPasswordScreen(),
+  SelectCountryScreen.id : (context) => SelectCountryScreen(),
+  VerifyUserScreen.id : (context) => VerifyUserScreen(),
+  CountrySearchScreen.id : (context) => CountrySearchScreen(),
+  NotGetCode.id : (context) => NotGetCode(),
+};
 
 List<String> countryName = [
   "Afghanistan",

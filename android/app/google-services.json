@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "45537576148",
+    "project_id": "smartify-9679b",
+    "storage_bucket": "smartify-9679b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:45537576148:android:cf5d6792acb6b20780e741",
+        "android_client_info": {
+          "package_name": "com.example.smartify.smartify"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "45537576148-j947gr2lqtg41v1rp00dqc6c18m951tu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.smartify.smartify",
+            "certificate_hash": "a1ed1873566cadd0acb3107f834f5f1fbc48bd5a"
+          }
+        },
+        {
+          "client_id": "45537576148-qk9ojndjhq6mkhdhpueci24viadhjntu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXZh3I-uLxBWrwU6YBOJ7A2IQ9Jcpbloc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "45537576148-qk9ojndjhq6mkhdhpueci24viadhjntu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

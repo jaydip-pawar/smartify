@@ -7,6 +7,8 @@ class AuthenticationProvider with ChangeNotifier {
   String email = '', country = '', password = '';
   String otp = '';
 
+  FirebaseAuth _auth = FirebaseAuth.instance;
+
   signUpDetails(country, email, password) {
     this.country = country;
     this.email = email;
@@ -14,46 +16,46 @@ class AuthenticationProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // void login(String email, String password, BuildContext context) async {
-  //   try {
-  //     UserCredential userCredential = await FirebaseAuth.instance
-  //         .signInWithEmailAndPassword(email: email, password: password);
-  //   } on FirebaseAuthException catch (e) {
-  //     if (e.code == 'user-not-found') {
-  //       return showDialog(
-  //           context: context,
-  //           builder: (_) => CustomAlertDialog(
-  //             title: 'Sign in',
-  //             description:
-  //             'Sorry, we cant\'t find an account with this email address. Please try again or create a new account.',
-  //             bText: 'Try again',
-  //           ));
-  //     } else if (e.code == 'wrong-password') {
-  //       return showDialog(
-  //           context: context,
-  //           builder: (_) => CustomAlertDialog(
-  //             title: 'Incorrect Password',
-  //             description: 'Your username or password is incorrect.',
-  //             bText: 'Try again',
-  //           ));
-  //     }
-  //   }
-  // }
-
-  Future<String> signUp(String email, String password, BuildContext context) async {
+  Future<String> login(String email, String password) async {
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'weak-password') {
-        return 'Weak Password';
-      } else if (e.code == 'email-already-in-use') {
-        return 'Email Already Exist';
+      if (e.code == 'user-not-found') {
+        return 'user not exist';
+      } else if (e.code == 'wrong-password') {
+        return 'wrong password';
       }
     } catch (e) {
       print(e);
       return 'error';
     }
     return 'Successful';
+  }
+
+  Future<String> signUp() async {
+    try {
+      await _auth.createUserWithEmailAndPassword(email: email, password: password);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        return 'Weak Password';
+      }
+    } catch (e) {
+      print(e);
+      return 'error';
+    }
+    return 'Successful';
+  }
+
+  Future<bool> checkUserExist(String email) async {
+    await _auth.fetchSignInMethodsForEmail(email).then((value) {
+      if(value.length == 0){
+        return false;
+      }
+      else {
+        return true;
+      }
+    });
+    return false;
   }
 
   Future<bool> sendOTP() async {

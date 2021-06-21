@@ -25,6 +25,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _emailFocused = false;
   bool isEmailValid = false;
   bool errorSendOtp = false;
+  bool accountExist = false;
   FocusNode _passwordFocus = new FocusNode();
   FocusNode _emailFocus = new FocusNode();
 
@@ -37,19 +38,33 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _authenticationProvider = Provider.of<AuthenticationProvider>(context);
+    final _authenticationProvider =
+        Provider.of<AuthenticationProvider>(context);
 
     void getCode() {
-      _authenticationProvider.signUpDetails(country, _emailController.text, _passwordController.text);
-      _authenticationProvider.sendOTP().then((value) {
-        if(value)
-          Navigator.pushNamed(context, VerifyUserScreen.id);
-        else
-          setState(() {
-            errorSendOtp = true;
-          });
+      setState(() {
+        errorSendOtp = false;
+        accountExist = false;
       });
 
+      _authenticationProvider.checkUserExist(_emailController.text).then((accountExist) {
+        if(!accountExist) {
+          _authenticationProvider.signUpDetails(
+              country, _emailController.text, _passwordController.text);
+          _authenticationProvider.sendOTP().then((value) {
+            if (value)
+              Navigator.pushNamed(context, VerifyUserScreen.id);
+            else
+              setState(() {
+                errorSendOtp = true;
+              });
+          });
+        } else {
+          setState(() {
+            accountExist = true;
+          });
+        }
+      });
     }
 
     return Scaffold(
@@ -74,9 +89,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               'Register',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 35),
             ),
-            SizedBox(
-              height: 15
-            ),
+            SizedBox(height: 15),
             TextField(
               onTap: () {
                 getCountry();
@@ -99,9 +112,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ),
             ), //Country selection TextField
-            SizedBox(
-              height: 15
-            ),
+            SizedBox(height: 15),
             TextField(
               focusNode: _emailFocus,
               controller: _emailController,
@@ -141,9 +152,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ),
             ),
-            SizedBox(
-              height: 15
-            ),
+            SizedBox(height: 15),
             TextField(
               focusNode: _passwordFocus,
               controller: _passwordController,
@@ -202,9 +211,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
             SizedBox(height: 15),
             Container(
               child: Text(
-                'Something went wrong. Please try again...',
+                accountExist ? 'The account already exists for that email.' : 'Something went wrong. Please try again...',
                 style: TextStyle(
-                    color: errorSendOtp ? Colors.red : Colors.white,
+                    color: errorSendOtp || accountExist ? Colors.red : Colors.white,
                     fontSize: 12),
               ),
             ),
@@ -213,15 +222,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
               height: 40,
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: isEmailValid ? _passwordController.text.isNotEmpty ? getCode : () {} : () {},
+                onPressed: isEmailValid
+                    ? _passwordController.text.isNotEmpty
+                        ? getCode
+                        : () {}
+                    : () {},
                 style: ElevatedButton.styleFrom(
                     // padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20.0)),
                     primary: isEmailValid
                         ? _passwordController.text.isNotEmpty
-                        ? Colors.blue
-                        : Colors.blue[100]
+                            ? Colors.blue
+                            : Colors.blue[100]
                         : Colors.blue[100]),
                 child: Text(
                   'Get Verification Code',

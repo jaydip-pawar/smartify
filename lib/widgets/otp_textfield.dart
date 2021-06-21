@@ -8,9 +8,8 @@ import 'package:smartify/providers/authenticationProvider.dart';
 import 'package:smartify/screens/home_screen.dart';
 
 class OtpTextField extends StatefulWidget {
-  final inputKey;
 
-  const OtpTextField({Key? key, required this.inputKey}) : super(key: key);
+  const OtpTextField({Key? key}) : super(key: key);
   @override
   _OtpTextFieldState createState() => _OtpTextFieldState();
 }
@@ -20,7 +19,6 @@ class _OtpTextFieldState extends State<OtpTextField> {
   @override
   Widget build(BuildContext context) {
     return CodeInput(
-      key: widget.inputKey,
       spacing: width(context) * 0.063,
       length: 6,
       keyboardType: TextInputType.number,
