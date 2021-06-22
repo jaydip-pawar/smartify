@@ -1,10 +1,5 @@
-import 'dart:async';
-
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:smartify/providers/authenticationProvider.dart';
 import 'package:smartify/screens/not_getting_code_screen.dart';
 import 'package:smartify/widgets/otp_textfield.dart';
 import 'package:smartify/widgets/otp_timer.dart';

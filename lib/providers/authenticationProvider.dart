@@ -16,9 +16,17 @@ class AuthenticationProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> login(String email, String password) async {
+  loginDetails(country, email, password) {
+    this.country = country;
+    this.email = email;
+    this.password = password;
+    notifyListeners();
+  }
+
+  Future<String> login() async {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
+      return 'Successful';
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
         return 'user not exist';
@@ -29,12 +37,13 @@ class AuthenticationProvider with ChangeNotifier {
       print(e);
       return 'error';
     }
-    return 'Successful';
+    return '';
   }
 
   Future<String> signUp() async {
     try {
       await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      return 'Successful';
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
         return 'Weak Password';
@@ -43,11 +52,11 @@ class AuthenticationProvider with ChangeNotifier {
       print(e);
       return 'error';
     }
-    return 'Successful';
+    return '';
   }
 
-  Future<bool> checkUserExist(String email) async {
-    await _auth.fetchSignInMethodsForEmail(email).then((value) {
+  Future<bool> checkUserExist(String email) async => await _auth.fetchSignInMethodsForEmail(email).then((value) {
+      print('list: $value');
       if(value.length == 0){
         return false;
       }
@@ -55,24 +64,24 @@ class AuthenticationProvider with ChangeNotifier {
         return true;
       }
     });
-    return false;
-  }
 
   Future<bool> sendOTP() async {
     EmailAuth.sessionName = 'Smartify';
     var res = await EmailAuth.sendOtp(receiverMail: email);
     if(!res) {
       return false;
+    } else {
+      return true;
     }
-    return true;
   }
 
   Future<bool> verifyOTP(String otp) async {
     var res = EmailAuth.validate(receiverMail: email, userOTP: otp);
     if(!res) {
       return false;
+    } else {
+      return true;
     }
-    return true;
   }
 
   void signOut() async {

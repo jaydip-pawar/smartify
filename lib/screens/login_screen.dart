@@ -2,7 +2,11 @@ import 'dart:core';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:loading_indicator/loading_indicator.dart';
+import 'package:provider/provider.dart';
+import 'package:smartify/providers/authenticationProvider.dart';
 import 'package:smartify/screens/forgot_password_screen.dart';
+import 'package:smartify/screens/home_screen.dart';
 import 'package:smartify/screens/select_country_screen.dart';
 import 'package:smartify/widgets/custom_icon.dart';
 
@@ -23,7 +27,10 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _emailFocused = false;
   bool visible = false;
   bool isEmailValid = false;
+  bool userNotExist = false;
   bool loginFailed = false;
+  bool error = false;
+  bool loading = false;
   FocusNode _passwordFocus = new FocusNode();
   FocusNode _emailFocus = new FocusNode();
 
@@ -36,6 +43,44 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    final _authenticationProvider = Provider.of<AuthenticationProvider>(context);
+
+    void login() {
+      setState(() {
+        userNotExist = false;
+        loginFailed = false;
+        error = false;
+        loading = true;
+      });
+
+      _authenticationProvider.loginDetails(country, _emailController.text, _passwordController.text);
+
+      _authenticationProvider.login().then((value) {
+        if(value == 'Successful') {
+          setState(() {
+            loading = false;
+          });
+          Navigator.pushReplacementNamed(context, HomeScreen.id);
+        } else if(value == 'user not exist') {
+          setState(() {
+            userNotExist = true;
+            loading = false;
+          });
+        } else if(value == 'wrong password') {
+          setState(() {
+            loginFailed = true;
+            loading = false;
+          });
+        } else if(value == 'error'){
+          setState(() {
+            error = true;
+            loading = false;
+          });
+        }
+      });
+    }
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
@@ -188,9 +233,11 @@ class _LoginScreenState extends State<LoginScreen> {
             SizedBox(height: 15),
             Container(
               child: Text(
-                'Incorrect account ID or password',
+                userNotExist ? 'User not exist.'
+                    : loginFailed ? 'Incorrect password! Try again...'
+                    : error ? 'Something went wrong! Try again...' : '',
                 style: TextStyle(
-                    color: loginFailed ? Colors.red : Colors.white,
+                    color: loginFailed || userNotExist || error ? Colors.red : Colors.white,
                     fontSize: 12),
               ),
             ),
@@ -213,11 +260,25 @@ class _LoginScreenState extends State<LoginScreen> {
                             ? Colors.blue
                             : Colors.blue[100]
                         : Colors.blue[100]),
-                child: Text(
-                  'Log In',
-                  style: TextStyle(
-                      color: Theme.of(context).primaryColor,
-                      fontWeight: FontWeight.bold),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    loading ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: LoadingIndicator(
+                        indicatorType: Indicator.lineSpinFadeLoader,
+                        color: Colors.white,
+                      ),
+                    ) : Container(),
+                    loading ? SizedBox(width: 10) : Container(),
+                    Text(
+                      'Log In',
+                      style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -289,13 +350,6 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordFocused = false;
       });
     }
-  }
-
-  void login() {
-    print('valid');
-    setState(() {
-      loginFailed = true;
-    });
   }
 
   void getCountry() async {

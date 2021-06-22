@@ -1,6 +1,7 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:loading_indicator/loading_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:smartify/providers/authenticationProvider.dart';
 import 'package:smartify/screens/select_country_screen.dart';
@@ -25,6 +26,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _emailFocused = false;
   bool isEmailValid = false;
   bool errorSendOtp = false;
+  bool loading = false;
   bool accountExist = false;
   FocusNode _passwordFocus = new FocusNode();
   FocusNode _emailFocus = new FocusNode();
@@ -38,30 +40,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _authenticationProvider =
-        Provider.of<AuthenticationProvider>(context);
+
+    final _authenticationProvider = Provider.of<AuthenticationProvider>(context);
 
     void getCode() {
       setState(() {
         errorSendOtp = false;
         accountExist = false;
+        loading = true;
       });
 
-      _authenticationProvider.checkUserExist(_emailController.text).then((accountExist) {
-        if(!accountExist) {
+      _authenticationProvider
+          .checkUserExist(_emailController.text)
+          .then((doesAccountExist) {
+        if (!doesAccountExist) {
           _authenticationProvider.signUpDetails(
               country, _emailController.text, _passwordController.text);
           _authenticationProvider.sendOTP().then((value) {
-            if (value)
+            if (value) {
+              setState(() {
+                loading = false;
+              });
               Navigator.pushNamed(context, VerifyUserScreen.id);
-            else
+            } else
               setState(() {
                 errorSendOtp = true;
+                loading = false;
               });
           });
         } else {
           setState(() {
             accountExist = true;
+            loading = false;
           });
         }
       });
@@ -211,9 +221,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
             SizedBox(height: 15),
             Container(
               child: Text(
-                accountExist ? 'The account already exists for that email.' : 'Something went wrong. Please try again...',
+                accountExist
+                    ? 'The account already exists for this email.'
+                    : 'Something went wrong. Please try again...',
                 style: TextStyle(
-                    color: errorSendOtp || accountExist ? Colors.red : Colors.white,
+                    color: errorSendOtp || accountExist
+                        ? Colors.red
+                        : Colors.white,
                     fontSize: 12),
               ),
             ),
@@ -236,11 +250,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ? Colors.blue
                             : Colors.blue[100]
                         : Colors.blue[100]),
-                child: Text(
-                  'Get Verification Code',
-                  style: TextStyle(
-                      color: Theme.of(context).primaryColor,
-                      fontWeight: FontWeight.bold),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    loading ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: LoadingIndicator(
+                        indicatorType: Indicator.lineSpinFadeLoader,
+                        color: Colors.white,
+                      ),
+                    ) : Container(),
+                    loading ? SizedBox(width: 10) : Container(),
+                    Text(
+                      'Get Verification Code',
+                      style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ],
                 ),
               ),
             ),

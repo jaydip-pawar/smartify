@@ -36,8 +36,17 @@ class _OtpTextFieldState extends State<OtpTextField> {
       onFilled: (otp) {
         final _authenticationProvider = Provider.of<AuthenticationProvider>(context, listen: false);
         _authenticationProvider.verifyOTP(otp).then((value) {
-          if(value)
-            Navigator.pushReplacementNamed(context, HomeScreen.id);
+          if(value) {
+            _authenticationProvider.signUp().then((value) {
+              if(value == 'Successful') {
+                Navigator.pushReplacementNamed(context, HomeScreen.id);
+              } else if(value == 'Weak Password'){
+                print('Weak Password');
+              } else {
+                print('error');
+              }
+            });
+          }
           else
             print('Wrong otp');
         });
