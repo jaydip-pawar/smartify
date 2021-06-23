@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_auth/email_auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -8,6 +9,7 @@ class AuthenticationProvider with ChangeNotifier {
   String otp = '';
 
   FirebaseAuth _auth = FirebaseAuth.instance;
+  final firestoreInstance = FirebaseFirestore.instance;
 
   signUpDetails(country, email, password) {
     this.country = country;
@@ -64,6 +66,15 @@ class AuthenticationProvider with ChangeNotifier {
         return true;
       }
     });
+
+  void addSignupData(String uid) {
+    firestoreInstance.collection("user").doc(uid).set({
+      "email": email,
+      "country": country,
+    }).then((_) {
+      print("successfully added profile data!");
+    });
+  }
 
   Future<bool> sendOTP() async {
     EmailAuth.sessionName = 'Smartify';

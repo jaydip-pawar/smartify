@@ -1,4 +1,5 @@
 import 'package:code_input/code_input.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -39,6 +40,8 @@ class _OtpTextFieldState extends State<OtpTextField> {
           if(value) {
             _authenticationProvider.signUp().then((value) {
               if(value == 'Successful') {
+                User? user = FirebaseAuth.instance.currentUser;
+                _authenticationProvider.addSignupData(user!.uid);
                 Navigator.pushReplacementNamed(context, HomeScreen.id);
               } else if(value == 'Weak Password'){
                 print('Weak Password');
