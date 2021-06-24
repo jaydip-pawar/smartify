@@ -1,4 +1,6 @@
 import 'package:flutter/cupertino.dart';
+import 'package:smartify/screens/adding_device_screen.dart';
+import 'package:smartify/screens/board_connect.dart';
 import 'package:smartify/screens/country_search_screen.dart';
 import 'package:smartify/screens/forgot_password_screen.dart';
 import 'package:smartify/screens/home_screen.dart';
@@ -29,6 +31,8 @@ Map<String, Widget Function(BuildContext)> routes = {
   VerifyUserScreen.id : (context) => VerifyUserScreen(),
   CountrySearchScreen.id : (context) => CountrySearchScreen(),
   NotGetCode.id : (context) => NotGetCode(),
+  WebSocketLed.id : (context) => WebSocketLed(),
+  AddingDeviceScreen.id : (context) => AddingDeviceScreen(),
 };
 
 List<String> countryName = [
