@@ -1,8 +1,10 @@
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:smartify/constants.dart';
 import 'package:smartify/widgets/add_device_timer.dart';
 import 'package:smartify/widgets/filled_track_progressbar.dart';
+import 'package:flutter_wifi_connect/flutter_wifi_connect.dart';
 
 class AddingDeviceScreen extends StatefulWidget {
   static const String id = 'adding-device-screen';
@@ -64,7 +66,20 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
                         ),
                       ),
                       SizedBox(height: 18),
-                      Text('Ensure that the WI-FI signal is good.'),
+                      Container(
+                        width: double.infinity,
+                        height: height(context) * 0.05,
+                        child: AnimatedTextKit(
+                          animatedTexts: [
+                            RotateAnimatedText(
+                                'Ensure that the WI-FI signal is good.'),
+                            RotateAnimatedText(
+                                'Ensure that the device is powered on.'),
+                          ],
+                          pause: Duration.zero,
+                          repeatForever: true,
+                        ),
+                      ),
                     ],
                   ),
                   Column(
@@ -114,7 +129,8 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
                                 children: [
                                   Expanded(
                                     child: Container(
-                                      margin: EdgeInsets.only(left: 2, right: 2),
+                                      margin:
+                                          EdgeInsets.only(left: 2, right: 2),
                                       child: Divider(
                                         color: Colors.white,
                                         thickness: 0.8,

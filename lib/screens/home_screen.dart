@@ -65,6 +65,11 @@ class _HomeScreenState extends State<HomeScreen> {
           boardSsid = data.elementAt(0);
           boardPassword = data.elementAt(1);
         });
+
+        // FlutterWifiConnect.connectToSecureNetwork(boardSsid, boardPassword).then((value) {
+        //   print(value);
+        // });
+
       } on PlatformException {
         print('Failed to get platform version.');
       }
@@ -94,6 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
           MaterialButton(
             onPressed: (){
               showData();
+              // scanQRCode();
             },
             child: Text('Show user Data'),
           ),
