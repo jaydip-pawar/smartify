@@ -31,7 +31,6 @@ class _HomeScreenState extends State<HomeScreen> {
     User? user = FirebaseAuth.instance.currentUser;
 
     showData() {
-      print(user!.uid);
       _userServices.getUserById(user!.uid).then((value) {
         setState(() {
           email = value.data()!["email"];
@@ -65,10 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
           boardSsid = data.elementAt(0);
           boardPassword = data.elementAt(1);
         });
-
-        // FlutterWifiConnect.connectToSecureNetwork(boardSsid, boardPassword).then((value) {
-        //   print(value);
-        // });
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AddingDeviceScreen(ssid: boardSsid, password: boardPassword,)));
 
       } on PlatformException {
         print('Failed to get platform version.');
@@ -80,8 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             onPressed: (){
-              // scanQRCode();
-              Navigator.pushNamed(context, AddingDeviceScreen.id);
+              scanQRCode();
             },
             icon: Icon(Icons.add),
           )

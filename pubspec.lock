@@ -212,13 +212,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_wifi_connect:
-    dependency: "direct main"
-    description:
-      name: flutter_wifi_connect
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.0.7"
   http:
     dependency: transitive
     description:
@@ -434,6 +427,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.0"
+  wifi_configuration:
+    dependency: "direct main"
+    description:
+      name: wifi_configuration
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.2.1"
 sdks:
   dart: ">=2.13.0 <3.0.0"
   flutter: ">=2.0.0"

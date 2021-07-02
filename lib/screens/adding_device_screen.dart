@@ -1,20 +1,71 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:smartify/constants.dart';
+import 'package:smartify/providers/addDeviceProvider.dart';
+import 'package:smartify/screens/home_screen.dart';
 import 'package:smartify/widgets/add_device_timer.dart';
 import 'package:smartify/widgets/filled_track_progressbar.dart';
-import 'package:flutter_wifi_connect/flutter_wifi_connect.dart';
+import 'package:wifi_configuration/wifi_configuration.dart';
 
 class AddingDeviceScreen extends StatefulWidget {
   static const String id = 'adding-device-screen';
-  const AddingDeviceScreen({Key? key}) : super(key: key);
+  final ssid, password;
+  const AddingDeviceScreen({Key? key, this.ssid, this.password}) : super(key: key);
 
   @override
   _AddingDeviceScreenState createState() => _AddingDeviceScreenState();
 }
 
 class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
+
+  bool scanning = true;
+
+  @override
+  void initState() {
+    connectWithWifi();
+    super.initState();
+  }
+
+
+  Future<void> connectWithWifi() async {
+    final _addDeviceProvider = Provider.of<AddDeviceProvider>(context, listen: false);
+    WifiConnectionStatus connectionStatus = await WifiConfiguration.connectToWifi(widget.ssid, widget.password, "com.example.smartify.smartify");
+    switch (connectionStatus) {
+      case WifiConnectionStatus.connected:
+        print("connected");
+        bool isConnected = await WifiConfiguration.isConnectedToWifi(widget.ssid);
+        print(isConnected);
+        break;
+
+      case WifiConnectionStatus.alreadyConnected:
+        print("alreadyConnected");
+        break;
+
+      case WifiConnectionStatus.notConnected:
+        print("notConnected");
+        if(_addDeviceProvider.getTimerState()) {
+          connectWithWifi();
+        } else {
+          print('timer off');
+        }
+        break;
+
+      case WifiConnectionStatus.platformNotSupported:
+        print("platformNotSupported");
+        break;
+
+      case WifiConnectionStatus.profileAlreadyInstalled:
+        print("profileAlreadyInstalled");
+        break;
+
+      case WifiConnectionStatus.locationNotAllowed:
+        print("locationNotAllowed");
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -23,7 +74,7 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
           backgroundColor: Colors.white30,
           leadingWidth: width(context) * 0.18,
           leading: GestureDetector(
-            onTap: () => Navigator.pop(context),
+            onTap: () => Navigator.pushReplacementNamed(context, HomeScreen.id),
             child: Center(
               child: Container(
                 padding: EdgeInsets.only(left: 10),
@@ -141,6 +192,10 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
                                   CircleAvatar(
                                     radius: 10,
                                     backgroundColor: Colors.blueAccent[200],
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(4.0),
+                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3,),
+                                    ),
                                   ),
                                   Expanded(
                                     child: Container(

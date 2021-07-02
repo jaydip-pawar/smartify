@@ -32,7 +32,7 @@ dependencies:
   web_socket_channel: ^2.1.0
   syncfusion_flutter_gauges: ^19.1.69
   animated_text_kit: ^4.2.1
-  flutter_wifi_connect: ^0.0.7
+  wifi_configuration: ^1.2.1
 
 dev_dependencies:
   flutter_test:
