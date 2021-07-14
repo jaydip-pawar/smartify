@@ -40,7 +40,6 @@ class NavigationScreen extends StatelessWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      // padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20.0)),
                         primary: Colors.white),

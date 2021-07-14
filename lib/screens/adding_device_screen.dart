@@ -1,13 +1,11 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:simply_wifi/simply_wifi.dart';
 import 'package:smartify/constants.dart';
-import 'package:smartify/providers/addDeviceProvider.dart';
 import 'package:smartify/screens/home_screen.dart';
 import 'package:smartify/widgets/add_device_timer.dart';
 import 'package:smartify/widgets/filled_track_progressbar.dart';
-import 'package:wifi_configuration/wifi_configuration.dart';
 
 class AddingDeviceScreen extends StatefulWidget {
   static const String id = 'adding-device-screen';
@@ -21,49 +19,75 @@ class AddingDeviceScreen extends StatefulWidget {
 class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
 
   bool scanning = true;
+  late bool disposed;
+  String boardSSID = "Default SSID";
+  String boardPassword = "Default Password";
 
   @override
   void initState() {
+    disposed = false;
     connectWithWifi();
     super.initState();
   }
 
 
-  Future<void> connectWithWifi() async {
-    final _addDeviceProvider = Provider.of<AddDeviceProvider>(context, listen: false);
-    WifiConnectionStatus connectionStatus = await WifiConfiguration.connectToWifi(widget.ssid, widget.password, "com.example.smartify.smartify");
-    switch (connectionStatus) {
-      case WifiConnectionStatus.connected:
-        print("connected");
-        bool isConnected = await WifiConfiguration.isConnectedToWifi(widget.ssid);
-        print(isConnected);
-        break;
+  // Future<void> connectWithWifi() async {
+  //   final _addDeviceProvider = Provider.of<AddDeviceProvider>(context, listen: false);
+  //   WifiConnectionStatus connectionStatus = await WifiConfiguration.connectToWifi(widget.ssid, widget.password, "com.example.smartify.smartify");
+  //   switch (connectionStatus) {
+  //     case WifiConnectionStatus.connected:
+  //       print("connected");
+  //       bool isConnected = await WifiConfiguration.isConnectedToWifi(widget.ssid);
+  //       print(isConnected);
+  //       break;
+  //
+  //     case WifiConnectionStatus.alreadyConnected:
+  //       print("alreadyConnected");
+  //       break;
+  //
+  //     case WifiConnectionStatus.notConnected:
+  //       print("notConnected");
+  //       if(_addDeviceProvider.getTimerState()) {
+  //         // connectWithWifi();
+  //       } else {
+  //         print('timer off');
+  //       }
+  //       break;
+  //
+  //     case WifiConnectionStatus.platformNotSupported:
+  //       print("platformNotSupported");
+  //       break;
+  //
+  //     case WifiConnectionStatus.profileAlreadyInstalled:
+  //       print("profileAlreadyInstalled");
+  //       break;
+  //
+  //     case WifiConnectionStatus.locationNotAllowed:
+  //       print("locationNotAllowed");
+  //       break;
+  //   }
+  // }
 
-      case WifiConnectionStatus.alreadyConnected:
-        print("alreadyConnected");
-        break;
-
-      case WifiConnectionStatus.notConnected:
-        print("notConnected");
-        if(_addDeviceProvider.getTimerState()) {
-          connectWithWifi();
+  void connectWithWifi() {
+    if(!disposed) {
+      SimplyWifi.connectWifiByName(boardSSID, password: boardPassword).then((value) {
+        if(value) {
+          print('connected');
+          setState(() {
+            scanning = false;
+          });
         } else {
-          print('timer off');
+          print('not connected');
+          connectWithWifi();
         }
-        break;
-
-      case WifiConnectionStatus.platformNotSupported:
-        print("platformNotSupported");
-        break;
-
-      case WifiConnectionStatus.profileAlreadyInstalled:
-        print("profileAlreadyInstalled");
-        break;
-
-      case WifiConnectionStatus.locationNotAllowed:
-        print("locationNotAllowed");
-        break;
+      });
     }
+  }
+
+  @override
+  void dispose() {
+    disposed = true;
+    super.dispose();
   }
 
   @override

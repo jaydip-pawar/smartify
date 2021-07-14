@@ -2,21 +2,18 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:smartify/constants.dart';
-import 'package:smartify/providers/addDeviceProvider.dart';
 import 'package:smartify/providers/authenticationProvider.dart';
 import 'package:smartify/screens/splash_screen.dart';
 import 'package:smartify/theme.dart';
 import 'package:provider/provider.dart';
 
 void main() {
+  // WidgetsFlutterBinding.ensureInitialized();
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(
           create: (_) => AuthenticationProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => AddDeviceProvider(),
         ),
       ],
       child: MyApp(),

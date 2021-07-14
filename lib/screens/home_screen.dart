@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import 'package:smartify/providers/authenticationProvider.dart';
 import 'package:smartify/screens/adding_device_screen.dart';
 import 'package:smartify/screens/board_connect.dart';
+import 'package:smartify/screens/device_not_found_screen.dart';
+import 'package:smartify/screens/get_wifi_password_screen.dart';
 import 'package:smartify/screens/navigation_screen.dart';
 import 'package:multiline/multiline.dart';
 import 'package:smartify/services/user_services.dart';
@@ -65,7 +67,6 @@ class _HomeScreenState extends State<HomeScreen> {
           boardPassword = data.elementAt(1);
         });
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AddingDeviceScreen(ssid: boardSsid, password: boardPassword,)));
-
       } on PlatformException {
         print('Failed to get platform version.');
       }
@@ -76,7 +77,8 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             onPressed: (){
-              scanQRCode();
+              // scanQRCode();
+              Navigator.pushReplacementNamed(context, GetWiFiPasswordScreen.id);
             },
             icon: Icon(Icons.add),
           )

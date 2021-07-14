@@ -9,8 +9,8 @@
 
    <application
         android:label="smartify"
-        android:icon="@mipmap/ic_launcher">
-        android:usesCleartextTraffic="true"
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".MainActivity"
@@ -46,5 +46,5 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-    </application>
+   </application>
 </manifest>

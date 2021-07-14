@@ -1,8 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:smartify/providers/addDeviceProvider.dart';
+import 'package:smartify/screens/device_not_found_screen.dart';
 
 class AddDeviceTimer extends StatefulWidget {
   const AddDeviceTimer({Key? key}) : super(key: key);
@@ -17,13 +16,12 @@ class _AddDeviceTimerState extends State<AddDeviceTimer> {
   int minutes = 1;
 
   void startTimer() {
-    changeTimerState(true);
     const oneSec = const Duration(seconds: 1);
     _timer = new Timer.periodic(oneSec, (Timer timer) {
       setState(
         () {
           if (seconds == 0 && minutes == 0) {
-            changeTimerState(false);
+            Navigator.pushReplacementNamed(context, DeviceNotFoundScreen.id);
             timer.cancel();
           } else if (seconds == 0) {
             minutes = minutes - 1;
@@ -34,11 +32,6 @@ class _AddDeviceTimerState extends State<AddDeviceTimer> {
         },
       );
     });
-  }
-
-  void changeTimerState(bool state) {
-    final _addDeviceProvider = Provider.of<AddDeviceProvider>(context, listen: false);
-    _addDeviceProvider.changeTimerState(state);
   }
 
   @override
