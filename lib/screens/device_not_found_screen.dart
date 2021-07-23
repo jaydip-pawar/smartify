@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smartify/constants.dart';
+import 'package:smartify/screens/adding_device_screen.dart';
 
 class DeviceNotFoundScreen extends StatelessWidget {
   static const String id = 'device-not-found-screen';
@@ -95,7 +96,10 @@ class DeviceNotFoundScreen extends StatelessWidget {
                   width: double.infinity,
                   padding: EdgeInsets.only(left: 65, right: 65),
                   child: GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+
+                      Navigator.pushReplacementNamed(context, AddingDeviceScreen.id);
+                    },
                     child: Container(
                       decoration: BoxDecoration(
                           color: Colors.grey.shade200,

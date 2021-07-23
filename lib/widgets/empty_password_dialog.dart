@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:smartify/constants.dart';
+import 'package:smartify/providers/deviceProvider.dart';
 import 'package:smartify/screens/adding_device_screen.dart';
 
 class EmptyPasswordDialog extends StatelessWidget {
+
+  final wifiSSID, wifiPassword;
+
+  const EmptyPasswordDialog({Key? key, this.wifiSSID, this.wifiPassword}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +52,8 @@ class EmptyPasswordDialog extends StatelessWidget {
                     Expanded(
                       child: MaterialButton(
                         onPressed: (){
+                          final _deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+                          _deviceProvider.setSsidPassword(wifiSSID, wifiPassword);
                           Navigator.pop(context);
                           Navigator.pushNamed(context, AddingDeviceScreen.id);
                         },

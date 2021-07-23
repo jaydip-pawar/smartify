@@ -34,10 +34,8 @@ class _WebSocketLed extends State<WebSocketLed>{
         setState(() {
           if(message == "connected"){
             connected = true; //message is "connected" from NodeMCU
-          }else if(message == "poweron:success"){
+          }else if(message == "closing"){
             ledstatus = true;
-          }else if(message == "poweroff:success"){
-            ledstatus = false;
           }
         });
       },

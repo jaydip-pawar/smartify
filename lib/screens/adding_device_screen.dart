@@ -1,16 +1,26 @@
+import 'dart:async';
+
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:network_info_plus/network_info_plus.dart';
+import 'package:provider/provider.dart';
 import 'package:simply_wifi/simply_wifi.dart';
 import 'package:smartify/constants.dart';
+import 'package:smartify/providers/deviceProvider.dart';
+import 'package:smartify/screens/device_not_found_screen.dart';
 import 'package:smartify/screens/home_screen.dart';
-import 'package:smartify/widgets/add_device_timer.dart';
 import 'package:smartify/widgets/filled_track_progressbar.dart';
+import 'package:web_socket_channel/io.dart';
+import 'package:wifi_iot/wifi_iot.dart';
+
+bool scanning = true;
+bool registering = false;
+bool initializing = false;
 
 class AddingDeviceScreen extends StatefulWidget {
   static const String id = 'adding-device-screen';
-  final ssid, password;
-  const AddingDeviceScreen({Key? key, this.ssid, this.password}) : super(key: key);
+  const AddingDeviceScreen({Key? key}) : super(key: key);
 
   @override
   _AddingDeviceScreenState createState() => _AddingDeviceScreenState();
@@ -18,63 +28,152 @@ class AddingDeviceScreen extends StatefulWidget {
 
 class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
 
-  bool scanning = true;
+  // wifi connection
   late bool disposed;
-  String boardSSID = "Default SSID";
-  String boardPassword = "Default Password";
+  String boardSSID = "Smartify";
+  String boardPassword = "12345678";
+
+  // board connection
+  late IOWebSocketChannel channel;
+  late bool connected;
+
+  var _timer;
+  int seconds = 59;
+  int minutes = 1;
 
   @override
   void initState() {
     disposed = false;
-    connectWithWifi();
+    startTimer();
+    getSSID();
     super.initState();
   }
 
+  getSSID() async {
+    NetworkInfo().getWifiName().then((value) {
+      if (value != null && value != 'Smartify') {
+        setState(() {
+          scanning = true;
+          registering = false;
+          initializing = false;
+        });
+        // connectWithWifi();
+        List list = [];
+        scanWifi().then((value) {
+          value.forEach((element) {
+            list.add(element.ssid);
+          });
+          if(list.contains("Smartify")) connectWithWifi();
+          else getSSID();
+        });
+      } else {
+        if(value != "" && registering) {
+          channelConnect();
+        }
+      }
+    });
+  }
 
-  // Future<void> connectWithWifi() async {
-  //   final _addDeviceProvider = Provider.of<AddDeviceProvider>(context, listen: false);
-  //   WifiConnectionStatus connectionStatus = await WifiConfiguration.connectToWifi(widget.ssid, widget.password, "com.example.smartify.smartify");
-  //   switch (connectionStatus) {
-  //     case WifiConnectionStatus.connected:
-  //       print("connected");
-  //       bool isConnected = await WifiConfiguration.isConnectedToWifi(widget.ssid);
-  //       print(isConnected);
-  //       break;
-  //
-  //     case WifiConnectionStatus.alreadyConnected:
-  //       print("alreadyConnected");
-  //       break;
-  //
-  //     case WifiConnectionStatus.notConnected:
-  //       print("notConnected");
-  //       if(_addDeviceProvider.getTimerState()) {
-  //         // connectWithWifi();
-  //       } else {
-  //         print('timer off');
-  //       }
-  //       break;
-  //
-  //     case WifiConnectionStatus.platformNotSupported:
-  //       print("platformNotSupported");
-  //       break;
-  //
-  //     case WifiConnectionStatus.profileAlreadyInstalled:
-  //       print("profileAlreadyInstalled");
-  //       break;
-  //
-  //     case WifiConnectionStatus.locationNotAllowed:
-  //       print("locationNotAllowed");
-  //       break;
-  //   }
-  // }
+  Future<List<WifiNetwork>> scanWifi() {
+    return SimplyWifi.getListOfWifis();
+  }
 
-  void connectWithWifi() {
-    if(!disposed) {
-      SimplyWifi.connectWifiByName(boardSSID, password: boardPassword).then((value) {
-        if(value) {
-          print('connected');
+  channelConnect(){ //function to connect
+    print("Channel Connect called");
+    try{
+      channel = IOWebSocketChannel.connect("ws://192.168.0.1:81"); //channel IP : Port
+      channel.stream.listen((message) {
+        print(message);
+        setState(() {
+          if(message == "connected"){
+            print("Web connected");
+            setState(() {
+              connected = true;
+            });
+            sendCmd();
+          }else if(message == "success"){
+            print("Web updated");
+            setState(() {
+              scanning = false;
+              registering = false;
+              initializing = false;
+            });
+          }
+        });
+      },
+        onDone: () {
+          print("Web socket is closed");
           setState(() {
-            scanning = false;
+            connected = false;
+          });
+        },
+        onError: (error) {
+          print("e:"+error.toString());
+          channelConnect();
+        },);
+    }catch (_){
+      print("error on connecting to websocket.");
+      channelConnect();
+    }
+  }
+
+  Future<void> sendCmd() async {
+    final _deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+    String cmd = "${_deviceProvider.wifiSSID}\n${_deviceProvider.wifiPassword}";
+    print("SSID and Password: $cmd");
+    if(connected == true){
+      if(cmd.isNotEmpty) channel.sink.add(cmd);
+    }else{
+      channelConnect();
+      print("Websocket is not connected.");
+    }
+  }
+
+  void startTimer() {
+    const oneSec = const Duration(seconds: 1);
+    _timer = new Timer.periodic(oneSec, (Timer timer) {
+      setState(
+        () {
+          if (seconds == 0 && minutes == 0) {
+            if(scanning) {
+              Navigator.pushReplacementNamed(context, DeviceNotFoundScreen.id);
+            } else if(registering) {
+              Navigator.pushReplacementNamed(context, DeviceNotFoundScreen.id);
+            } else {
+              Navigator.pushReplacementNamed(context, DeviceNotFoundScreen.id);
+            }
+            timer.cancel();
+          } else if (seconds == 0) {
+            minutes = minutes - 1;
+            seconds = 59;
+          } else {
+            seconds = seconds - 1;
+          }
+        },
+      );
+    });
+  }
+
+  void connectWithWifi() async {
+    if (!disposed) {
+      SimplyWifi.connectWifiByName(boardSSID, password: boardPassword)
+          .then((value) {
+        if (value) {
+          NetworkInfo().getWifiName().then((value) {
+            if(value == "Smartify") {
+              print('connected');
+              setState(() {
+                scanning = false;
+                seconds = 59;
+                minutes = 1;
+                registering = true;
+              });
+              Future.delayed(Duration(seconds: 5), (){
+                channelConnect();
+              });
+            } else {
+              getSSID();
+            }
           });
         } else {
           print('not connected');
@@ -87,6 +186,7 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
   @override
   void dispose() {
     disposed = true;
+    _timer.cancel();
     super.dispose();
   }
 
@@ -157,36 +257,60 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
                       ),
                     ],
                   ),
-                  Column(
-                    children: [
-                      Container(
-                        height: height(context) * 0.28,
-                        width: width(context) * 0.5,
-                        child: Stack(
+                  scanning
+                      ? Column(
                           children: [
-                            Align(child: FilledTrackIndeterminateProgressbar()),
-                            Align(
-                              child: CircleAvatar(
-                                radius: width(context) * 0.1,
-                                backgroundColor:
-                                    Colors.blueAccent[200]!.withOpacity(0.5),
-                                child: Icon(
-                                  Icons.search,
-                                  color: Colors.white,
-                                  size: 35,
-                                ),
+                            Container(
+                              height: height(context) * 0.28,
+                              width: width(context) * 0.5,
+                              child: Stack(
+                                children: [
+                                  Align(
+                                      child:
+                                          FilledTrackIndeterminateProgressbar()),
+                                  Align(
+                                    child: CircleAvatar(
+                                      radius: width(context) * 0.1,
+                                      backgroundColor: Colors.blueAccent[200]!
+                                          .withOpacity(0.5),
+                                      child: Icon(
+                                        Icons.search,
+                                        color: Colors.white,
+                                        size: 35,
+                                      ),
+                                    ),
+                                  ),
+                                  Align(
+                                    alignment: Alignment.bottomCenter,
+                                    child: timer(),
+                                  )
+                                ],
                               ),
                             ),
-                            Align(
-                              alignment: Alignment.bottomCenter,
-                              child: AddDeviceTimer(),
-                            )
+                            // AddDeviceTimer(),
                           ],
-                        ),
-                      ),
-                      // AddDeviceTimer(),
-                    ],
-                  ),
+                        )
+                      : registering
+                          ? Column(
+                              children: [
+                                Container(
+                                    height: height(context) * 0.28,
+                                    width: width(context) * 0.5,
+                                    child: Image.asset(
+                                        "assets/images/connecting_with_server.gif")),
+                                timer(),
+                              ],
+                            )
+                          : Column(
+                              children: [
+                                Container(
+                                    height: height(context) * 0.28,
+                                    width: width(context) * 0.5,
+                                    child: Image.asset(
+                                        "assets/images/moving_gears.gif")),
+                                timer(),
+                              ],
+                            ),
                   Container(
                     width: double.maxFinite,
                     height: height(context) * 0.17,
@@ -218,7 +342,10 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
                                     backgroundColor: Colors.blueAccent[200],
                                     child: Padding(
                                       padding: const EdgeInsets.all(4.0),
-                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3,),
+                                      child: scanning ? CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 3,
+                                      ) : Container(),
                                     ),
                                   ),
                                   Expanded(
@@ -270,6 +397,13 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
                                   CircleAvatar(
                                     radius: 10,
                                     backgroundColor: Colors.blueAccent[200],
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(4.0),
+                                      child: registering ? CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 3,
+                                      ) : Container(),
+                                    ),
                                   ),
                                   Expanded(
                                     child: Container(
@@ -320,6 +454,13 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
                                   CircleAvatar(
                                     radius: 10,
                                     backgroundColor: Colors.blueAccent[200],
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(4.0),
+                                      child: initializing ? CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 3,
+                                      ) : Container(),
+                                    ),
                                   ),
                                   Expanded(
                                     child: Container(
@@ -356,6 +497,38 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget timer() {
+    return Container(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '0$minutes:',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
+          ),
+          seconds <= 9
+              ? Text(
+                  '0$seconds',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                )
+              : Text(
+                  '$seconds',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+        ],
       ),
     );
   }

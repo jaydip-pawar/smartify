@@ -1,15 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:provider/provider.dart';
 import 'package:smartify/providers/authenticationProvider.dart';
-import 'package:smartify/screens/adding_device_screen.dart';
 import 'package:smartify/screens/board_connect.dart';
-import 'package:smartify/screens/device_not_found_screen.dart';
 import 'package:smartify/screens/get_wifi_password_screen.dart';
 import 'package:smartify/screens/navigation_screen.dart';
-import 'package:multiline/multiline.dart';
 import 'package:smartify/services/user_services.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -49,28 +44,28 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
 
-    Future<void> scanQRCode() async {
-      try {
-        final qrCode = await FlutterBarcodeScanner.scanBarcode(
-          '#ff6666',
-          'Cancel',
-          true,
-          ScanMode.QR,
-        );
-
-        if (!mounted) return;
-
-        var data = qrCode.multilineSplit();
-
-        setState(() {
-          boardSsid = data.elementAt(0);
-          boardPassword = data.elementAt(1);
-        });
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AddingDeviceScreen(ssid: boardSsid, password: boardPassword,)));
-      } on PlatformException {
-        print('Failed to get platform version.');
-      }
-    }
+    // Future<void> scanQRCode() async {
+    //   try {
+    //     final qrCode = await FlutterBarcodeScanner.scanBarcode(
+    //       '#ff6666',
+    //       'Cancel',
+    //       true,
+    //       ScanMode.QR,
+    //     );
+    //
+    //     if (!mounted) return;
+    //
+    //     var data = qrCode.multilineSplit();
+    //
+    //     setState(() {
+    //       boardSsid = data.elementAt(0);
+    //       boardPassword = data.elementAt(1);
+    //     });
+    //     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AddingDeviceScreen(ssid: boardSsid, password: boardPassword,)));
+    //   } on PlatformException {
+    //     print('Failed to get platform version.');
+    //   }
+    // }
 
     return Scaffold(
       appBar: AppBar(

@@ -3,10 +3,12 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:keyboard_utils/widgets.dart';
+import 'package:network_info_plus/network_info_plus.dart';
+import 'package:provider/provider.dart';
+import 'package:smartify/providers/deviceProvider.dart';
 import 'package:smartify/screens/adding_device_screen.dart';
 import 'package:smartify/widgets/custom_icon.dart';
 import 'package:smartify/widgets/empty_password_dialog.dart';
-import 'package:wifi_info_flutter/wifi_info_flutter.dart';
 import 'package:smartify/constants.dart';
 import 'package:open_settings/open_settings.dart';
 
@@ -18,7 +20,8 @@ class GetWiFiPasswordScreen extends StatefulWidget {
   _GetWiFiPasswordScreenState createState() => _GetWiFiPasswordScreenState();
 }
 
-class _GetWiFiPasswordScreenState extends State<GetWiFiPasswordScreen> {
+class _GetWiFiPasswordScreenState extends State<GetWiFiPasswordScreen>
+    with WidgetsBindingObserver {
   String wifiName = "";
   bool visible = false;
 
@@ -26,18 +29,35 @@ class _GetWiFiPasswordScreenState extends State<GetWiFiPasswordScreen> {
   TextEditingController wifiPassword = TextEditingController();
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) getSSID();
+  }
+
+  @override
   void initState() {
     getSSID();
+    WidgetsBinding.instance!.addObserver(this);
     super.initState();
   }
 
   getSSID() async {
-    WifiInfo().getWifiName().then((value) {
+    NetworkInfo().getWifiName().then((value) {
       if (value != null)
         setState(() {
-          wifiName = value;
+          wifiSSID.text = value;
+        });
+      else
+        setState(() {
+          wifiSSID.clear();
+          wifiName = "Turn on WiFi";
         });
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance!.removeObserver(this);
+    super.dispose();
   }
 
   @override
@@ -119,35 +139,33 @@ class _GetWiFiPasswordScreenState extends State<GetWiFiPasswordScreen> {
                         style: TextStyle(fontSize: 16),
                         decoration: InputDecoration(
                           border: InputBorder.none,
-                          hintText: wifiName == '' ? 'SSID' : wifiName,
+                          hintText: wifiName,
                           prefixIcon: Padding(
-                            padding: const EdgeInsets.only(bottom: 7),
+                            padding: const EdgeInsets.only(bottom: 9),
                             child: Icon(
                               Icons.wifi,
                               color: Colors.grey,
                             ),
                           ),
                           suffixIcon: Padding(
-                            padding: const EdgeInsets.only(bottom: 7),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  onPressed: () {
-                                    OpenSettings.openWIFISetting().then((value) {
-                                      print("hey");
-                                    });
-                                  },
-                                  iconSize: 18,
-                                  icon: Icon(
-                                    CupertinoIcons.arrow_down_right_arrow_up_left,
-                                    color: Colors.grey,
-                                  ),
-                                )
-                              ],
-                            )
-                          ),
+                              padding: const EdgeInsets.only(bottom: 9),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    onPressed: () {
+                                      OpenSettings.openWIFISetting();
+                                    },
+                                    iconSize: 18,
+                                    icon: Icon(
+                                      CupertinoIcons
+                                          .arrow_down_right_arrow_up_left,
+                                      color: Colors.grey,
+                                    ),
+                                  )
+                                ],
+                              )),
                         ),
                       ),
                       Divider(thickness: 1, height: 25),
@@ -164,7 +182,7 @@ class _GetWiFiPasswordScreenState extends State<GetWiFiPasswordScreen> {
                           border: InputBorder.none,
                           hintText: 'Password',
                           suffixIcon: Padding(
-                            padding: const EdgeInsets.only(bottom: 7),
+                            padding: const EdgeInsets.only(bottom: 9),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               mainAxisSize: MainAxisSize.min,
@@ -194,7 +212,7 @@ class _GetWiFiPasswordScreenState extends State<GetWiFiPasswordScreen> {
                             ),
                           ),
                           prefixIcon: Padding(
-                            padding: const EdgeInsets.only(bottom: 7),
+                            padding: const EdgeInsets.only(bottom: 9),
                             child: Icon(
                               Icons.lock_outline,
                               color: Colors.grey,
@@ -247,15 +265,19 @@ class _GetWiFiPasswordScreenState extends State<GetWiFiPasswordScreen> {
   }
 
   void validateFields() {
-    if (wifiPassword.text.isEmpty) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return EmptyPasswordDialog();
-        },
-      );
-    } else {
-      Navigator.pushNamed(context, AddingDeviceScreen.id);
+    if (wifiSSID.text.isNotEmpty) {
+      if (wifiPassword.text.isEmpty) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return EmptyPasswordDialog(wifiSSID: wifiSSID.text, wifiPassword: wifiPassword.text);
+          },
+        );
+      } else {
+        final _deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+        _deviceProvider.setSsidPassword(wifiSSID.text, wifiPassword.text);
+        Navigator.pushNamed(context, AddingDeviceScreen.id);
+      }
     }
   }
 }
