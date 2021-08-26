@@ -1,18 +1,19 @@
 import 'dart:async';
 
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:provider/provider.dart';
-import 'package:simply_wifi/simply_wifi.dart';
 import 'package:smartify/constants.dart';
 import 'package:smartify/providers/deviceProvider.dart';
 import 'package:smartify/screens/device_not_found_screen.dart';
 import 'package:smartify/screens/home_screen.dart';
+import 'package:smartify/services/user_services.dart';
 import 'package:smartify/widgets/filled_track_progressbar.dart';
 import 'package:web_socket_channel/io.dart';
-import 'package:wifi_iot/wifi_iot.dart';
+import 'package:wifi_configuration_2/wifi_configuration_2.dart';
 
 bool scanning = true;
 bool registering = false;
@@ -41,6 +42,8 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
   int seconds = 59;
   int minutes = 1;
 
+  WifiConfiguration wifiConfiguration = WifiConfiguration();
+
   @override
   void initState() {
     disposed = false;
@@ -66,7 +69,8 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
           if(list.contains("Smartify")) connectWithWifi();
           else getSSID();
         });
-      } else {
+      }
+      else {
         if(value != "" && registering) {
           channelConnect();
         }
@@ -74,53 +78,107 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
     });
   }
 
-  Future<List<WifiNetwork>> scanWifi() {
-    return SimplyWifi.getListOfWifis();
+  Future<List> scanWifi() async {
+    return await wifiConfiguration.getWifiList();
+  }
+
+  checkBoardData() {
+
+    final _deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+
+    if(!disposed) {
+
+      wifiConfiguration.connectToWifi(_deviceProvider.wifiSSID, _deviceProvider.wifiPassword, "com.example.smartify.smartify")
+          .then((value) {
+
+        switch(value) {
+          case WifiConnectionStatus.connected:
+            UserServices _userServices = UserServices();
+            _userServices.fireStore.collection("user").doc(_userServices.uid).snapshots().listen((paired) {
+              bool status = paired["paired"];
+              if(status) {
+                Navigator.pushReplacementNamed(context, HomeScreen.id);
+              }
+            });
+            break;
+
+          case WifiConnectionStatus.alreadyConnected:
+            print("alreadyConnected");
+            break;
+
+          case WifiConnectionStatus.notConnected:
+            print("notConnected");
+            checkBoardData();
+            break;
+
+          case WifiConnectionStatus.platformNotSupported:
+            print("platformNotSupported");
+            break;
+
+          case WifiConnectionStatus.profileAlreadyInstalled:
+            print("profileAlreadyInstalled");
+            break;
+
+          case WifiConnectionStatus.locationNotAllowed:
+            print("locationNotAllowed");
+            break;
+        }
+      });
+    }
   }
 
   channelConnect(){ //function to connect
-    print("Channel Connect called");
-    try{
-      channel = IOWebSocketChannel.connect("ws://192.168.0.1:81"); //channel IP : Port
-      channel.stream.listen((message) {
-        print(message);
-        setState(() {
-          if(message == "connected"){
-            print("Web connected");
-            setState(() {
-              connected = true;
-            });
-            sendCmd();
-          }else if(message == "success"){
-            print("Web updated");
-            setState(() {
-              scanning = false;
-              registering = false;
-              initializing = false;
-            });
-          }
-        });
-      },
-        onDone: () {
-          print("Web socket is closed");
+    if(!disposed) {
+      try{
+        channel = IOWebSocketChannel.connect("ws://192.168.0.1:81"); //channel IP : Port
+        channel.stream.listen((message) {
           setState(() {
-            connected = false;
+            if(message == "connected"){
+              connected = true;
+              sendCmd();
+            }else if(message == "failed"){
+              sendCmd();
+            } else if(message.contains("BoardName")) {
+              List splittedString = message.split(":");
+              if(splittedString[1] != null) {
+                final _deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+                _deviceProvider.setDeviceName(splittedString[1]);
+                print("Board name=${splittedString[1]}");
+                channel.sink.add("close");
+
+                wifiConfiguration.connectToWifi(_deviceProvider.wifiSSID, _deviceProvider.wifiPassword, "com.example.smartify.smartify");
+
+                scanning = false;
+                registering = false;
+                initializing = true;
+                seconds = 59;
+                minutes = 1;
+                checkBoardData();
+              }
+            }
           });
         },
-        onError: (error) {
-          print("e:"+error.toString());
-          channelConnect();
-        },);
-    }catch (_){
-      print("error on connecting to websocket.");
-      channelConnect();
+          onDone: () {
+            print("Web socket is closed");
+            setState(() {
+              connected = false;
+            });
+          },
+          onError: (error) {
+            print("e:"+error.toString());
+            channelConnect();
+          },);
+      }catch (_){
+        print("error on connecting to websocket.");
+        channelConnect();
+      }
     }
   }
 
   Future<void> sendCmd() async {
+    User? user = FirebaseAuth.instance.currentUser;
     final _deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
-    String cmd = "${_deviceProvider.wifiSSID}\n${_deviceProvider.wifiPassword}";
-    print("SSID and Password: $cmd");
+    String cmd = "${_deviceProvider.wifiSSID}\n${_deviceProvider.wifiPassword}\n${user!.uid}";
     if(connected == true){
       if(cmd.isNotEmpty) channel.sink.add(cmd);
     }else{
@@ -156,29 +214,49 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
 
   void connectWithWifi() async {
     if (!disposed) {
-      SimplyWifi.connectWifiByName(boardSSID, password: boardPassword)
+      wifiConfiguration.connectToWifi(boardSSID, boardPassword, "com.example.smartify.smartify")
           .then((value) {
-        if (value) {
-          NetworkInfo().getWifiName().then((value) {
-            if(value == "Smartify") {
-              print('connected');
-              setState(() {
-                scanning = false;
-                seconds = 59;
-                minutes = 1;
-                registering = true;
-              });
-              Future.delayed(Duration(seconds: 5), (){
-                channelConnect();
-              });
-            } else {
-              getSSID();
+
+            switch(value) {
+              case WifiConnectionStatus.connected:
+                NetworkInfo().getWifiName().then((value) {
+                  if(value == "Smartify") {
+                    setState(() {
+                      scanning = false;
+                      seconds = 59;
+                      minutes = 1;
+                      registering = true;
+                    });
+                    Future.delayed(Duration(seconds: 5), (){
+                      channelConnect();
+                    });
+                  } else {
+                    getSSID();
+                  }
+                });
+                break;
+
+              case WifiConnectionStatus.alreadyConnected:
+                print("alreadyConnected");
+                break;
+
+              case WifiConnectionStatus.notConnected:
+                print("notConnected");
+                connectWithWifi();
+                break;
+
+              case WifiConnectionStatus.platformNotSupported:
+                print("platformNotSupported");
+                break;
+
+              case WifiConnectionStatus.profileAlreadyInstalled:
+                print("profileAlreadyInstalled");
+                break;
+
+              case WifiConnectionStatus.locationNotAllowed:
+                print("locationNotAllowed");
+                break;
             }
-          });
-        } else {
-          print('not connected');
-          connectWithWifi();
-        }
       });
     }
   }
