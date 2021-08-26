@@ -8,6 +8,7 @@ import 'package:network_info_plus/network_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:smartify/constants.dart';
 import 'package:smartify/providers/deviceProvider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:smartify/screens/device_not_found_screen.dart';
 import 'package:smartify/screens/home_screen.dart';
 import 'package:smartify/services/user_services.dart';
@@ -43,6 +44,8 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
   int minutes = 1;
 
   WifiConfiguration wifiConfiguration = WifiConfiguration();
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
+  User? user = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
@@ -146,7 +149,16 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
                 print("Board name=${splittedString[1]}");
                 channel.sink.add("close");
 
-                wifiConfiguration.connectToWifi(_deviceProvider.wifiSSID, _deviceProvider.wifiPassword, "com.example.smartify.smartify");
+                // wifiConfiguration.connectToWifi(_deviceProvider.wifiSSID, _deviceProvider.wifiPassword, "com.example.smartify.smartify").then((value) {
+                //   if(value == WifiConnectionStatus.connected) {
+                //     Future.delayed(Duration(seconds: 10), (){
+                //       checkBoardConnectivity();
+                //     });
+                //   }
+                // });
+                Future.delayed(Duration(seconds: 10), (){
+                  checkBoardConnectivity();
+                });
 
                 scanning = false;
                 registering = false;
@@ -259,6 +271,22 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
             }
       });
     }
+  }
+
+  void checkBoardConnectivity() {
+    print("Listening Started");
+    final _deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+    print("Checking connectivity::::::"+_deviceProvider.deviceName);
+    Stream documentStream = firestore.collection('boards').doc(user!.uid)
+        .collection(_deviceProvider.deviceName).doc("boardData").snapshots();
+    documentStream.listen((snapshot) {
+      print("Snapshot" + snapshot);
+      print("Snapshot Type ${snapshot.runtimeType}");
+      // snapshot.data!.docs.map((DocumentSnapshot document) {
+      //   Map<String, dynamic> data = document.data()! as Map<String, dynamic>;
+      //   print("Paired: ${data["paired"]}");
+      // });
+    });
   }
 
   @override

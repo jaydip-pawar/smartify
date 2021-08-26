@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smartify/providers/authenticationProvider.dart';
+import 'package:smartify/providers/deviceProvider.dart';
 import 'package:smartify/screens/board_connect.dart';
 import 'package:smartify/screens/get_wifi_password_screen.dart';
 import 'package:smartify/screens/navigation_screen.dart';
@@ -20,10 +22,32 @@ class _HomeScreenState extends State<HomeScreen> {
   String email = '', country = '';
   String boardSsid = '', boardPassword = '';
 
+  void checkBoardConnectivity() {
+    print("We are in");
+    User? user = FirebaseAuth.instance.currentUser;
+    Stream documentStream = FirebaseFirestore.instance.collection('boards').doc(user!.uid)
+        .collection("ESP8266_Board_1").doc("boardData").snapshots();
+    documentStream.listen((snapshot) {
+      print("Snapshot Type ${snapshot.runtimeType}");
+      // snapshot.data!.docs.map((DocumentSnapshot document) {
+      //   Map<String, dynamic> data = document.data()! as Map<String, dynamic>;
+      //   print("Paired: ${data["paired"]}");
+      // });
+    });
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    checkBoardConnectivity();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
 
     final _authenticationProvider = Provider.of<AuthenticationProvider>(context);
+    final _deviceProvider = Provider.of<DeviceProvider>(context);
     UserServices _userServices = UserServices();
     User? user = FirebaseAuth.instance.currentUser;
 
@@ -100,6 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Text('ssid: $boardSsid'),
           Text('password: $boardPassword'),
           Text('uid: ${user!.uid}'),
+          Text("Board Name: ${_deviceProvider.deviceName}"),
         ],
       ),
     );
