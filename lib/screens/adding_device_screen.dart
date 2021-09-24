@@ -90,19 +90,25 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
     final _deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
 
     if(!disposed) {
+      print("...................................................................");
+      print("SSID: " + _deviceProvider.wifiSSID);
+      print("Password: " + _deviceProvider.wifiPassword);
+      print("...................................................................");
 
       wifiConfiguration.connectToWifi(_deviceProvider.wifiSSID, _deviceProvider.wifiPassword, "com.example.smartify.smartify")
           .then((value) {
 
         switch(value) {
           case WifiConnectionStatus.connected:
-            UserServices _userServices = UserServices();
-            _userServices.fireStore.collection("user").doc(_userServices.uid).snapshots().listen((paired) {
-              bool status = paired["paired"];
-              if(status) {
-                Navigator.pushReplacementNamed(context, HomeScreen.id);
-              }
-            });
+            // UserServices _userServices = UserServices();
+            // _userServices.fireStore.collection("user").doc(_userServices.uid).snapshots().listen((paired) {
+            //   bool status = paired["paired"];
+            //   if(status) {
+            //     Navigator.pushReplacementNamed(context, HomeScreen.id);
+            //   }
+            // });
+            checkBoardConnectivity();
+          print("Connected to user Wifi");
             break;
 
           case WifiConnectionStatus.alreadyConnected:
@@ -142,6 +148,9 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
             }else if(message == "failed"){
               sendCmd();
             } else if(message.contains("BoardName")) {
+              print("..........................................................................................");
+              print(message);
+              print("..........................................................................................");
               List splittedString = message.split(":");
               if(splittedString[1] != null) {
                 final _deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
@@ -156,9 +165,9 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
                 //     });
                 //   }
                 // });
-                Future.delayed(Duration(seconds: 10), (){
-                  checkBoardConnectivity();
-                });
+                // Future.delayed(Duration(seconds: 10), (){
+                //   checkBoardConnectivity();
+                // });
 
                 scanning = false;
                 registering = false;
@@ -277,15 +286,20 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
     print("Listening Started");
     final _deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
     print("Checking connectivity::::::"+_deviceProvider.deviceName);
-    Stream documentStream = firestore.collection('boards').doc(user!.uid)
-        .collection(_deviceProvider.deviceName).doc("boardData").snapshots();
-    documentStream.listen((snapshot) {
-      print("Snapshot" + snapshot);
-      print("Snapshot Type ${snapshot.runtimeType}");
-      // snapshot.data!.docs.map((DocumentSnapshot document) {
-      //   Map<String, dynamic> data = document.data()! as Map<String, dynamic>;
-      //   print("Paired: ${data["paired"]}");
-      // });
+
+    FirebaseFirestore.instance
+        .collection('boards')
+        .doc(user!.uid)
+        .collection(_deviceProvider.deviceName)
+        .doc("boardData")
+        .get()
+        .then((DocumentSnapshot documentSnapshot) {
+      if (documentSnapshot.exists) {
+        Navigator.pushReplacementNamed(context, HomeScreen.id);
+        print('Document exists on the database');
+      } else {
+        print('Document not exists...');
+      }
     });
   }
 

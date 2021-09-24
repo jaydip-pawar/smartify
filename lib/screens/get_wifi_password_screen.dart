@@ -97,162 +97,164 @@ class _GetWiFiPasswordScreenState extends State<GetWiFiPasswordScreen>
             borderRadius: BorderRadius.circular(28.0),
           ),
           child: Container(
-            child: Column(
-              children: [
-                Container(
-                  padding:
-                      EdgeInsets.only(left: 40, right: 40, top: 20, bottom: 10),
-                  child: Text(
-                    'Select 2.4 GHz Wi-Fi Network and enter password.',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                    textAlign: TextAlign.center,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Container(
+                    padding:
+                        EdgeInsets.only(left: 40, right: 40, top: 20, bottom: 10),
+                    child: Text(
+                      'Select 2.4 GHz Wi-Fi Network and enter password.',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                      textAlign: TextAlign.center,
+                    ),
+                  ), // Heading
+                  Container(
+                    padding:
+                        EdgeInsets.only(left: 30, right: 30, bottom: 10, top: 5),
+                    child: Text(
+                      'If your Wi-Fi is 5GHz, please set it to be 2.4GHz. Common router setting method.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ), // instruction text
+                  KeyboardAware(
+                    builder: (context, keyboardConfig) {
+                      return keyboardConfig.isKeyboardOpen
+                          ? Container()
+                          : Container(
+                              padding: EdgeInsets.only(
+                                  left: 25, right: 25, bottom: 10, top: 20),
+                              child:
+                                  Image.asset("assets/images/select_wifi.jpeg"),
+                            ); // Image
+                    },
                   ),
-                ), // Heading
-                Container(
-                  padding:
-                      EdgeInsets.only(left: 30, right: 30, bottom: 10, top: 5),
-                  child: Text(
-                    'If your Wi-Fi is 5GHz, please set it to be 2.4GHz. Common router setting method.',
-                    textAlign: TextAlign.center,
-                  ),
-                ), // instruction text
-                KeyboardAware(
-                  builder: (context, keyboardConfig) {
-                    return keyboardConfig.isKeyboardOpen
-                        ? Container()
-                        : Container(
-                            padding: EdgeInsets.only(
-                                left: 25, right: 25, bottom: 10, top: 20),
-                            child:
-                                Image.asset("assets/images/select_wifi.jpeg"),
-                          ); // Image
-                  },
-                ),
-                Container(
-                  padding:
-                      EdgeInsets.only(left: 20, right: 20, bottom: 10, top: 20),
-                  child: Column(
-                    children: [
-                      TextField(
-                        readOnly: true,
-                        controller: wifiSSID,
-                        style: TextStyle(fontSize: 16),
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          hintText: wifiName,
-                          prefixIcon: Padding(
-                            padding: const EdgeInsets.only(bottom: 9),
-                            child: Icon(
-                              Icons.wifi,
-                              color: Colors.grey,
+                  Container(
+                    padding:
+                        EdgeInsets.only(left: 20, right: 20, bottom: 10, top: 20),
+                    child: Column(
+                      children: [
+                        TextField(
+                          readOnly: true,
+                          controller: wifiSSID,
+                          style: TextStyle(fontSize: 16),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            hintText: wifiName,
+                            prefixIcon: Padding(
+                              padding: const EdgeInsets.only(bottom: 9),
+                              child: Icon(
+                                Icons.wifi,
+                                color: Colors.grey,
+                              ),
                             ),
+                            suffixIcon: Padding(
+                                padding: const EdgeInsets.only(bottom: 9),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      onPressed: () {
+                                        OpenSettings.openWIFISetting();
+                                      },
+                                      iconSize: 18,
+                                      icon: Icon(
+                                        CupertinoIcons
+                                            .arrow_down_right_arrow_up_left,
+                                        color: Colors.grey,
+                                      ),
+                                    )
+                                  ],
+                                )),
                           ),
-                          suffixIcon: Padding(
+                        ),
+                        Divider(thickness: 1, height: 25),
+                        TextField(
+                          controller: wifiPassword,
+                          textInputAction: TextInputAction.done,
+                          onChanged: (password) {
+                            passwordValidator(password);
+                          },
+                          obscureText: !visible,
+                          obscuringCharacter: '•',
+                          style: TextStyle(fontSize: 16),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'Password',
+                            suffixIcon: Padding(
                               padding: const EdgeInsets.only(bottom: 9),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  IconButton(
-                                    onPressed: () {
-                                      OpenSettings.openWIFISetting();
-                                    },
-                                    iconSize: 18,
-                                    icon: Icon(
-                                      CupertinoIcons
-                                          .arrow_down_right_arrow_up_left,
-                                      color: Colors.grey,
-                                    ),
-                                  )
+                                  wifiPassword.text.isNotEmpty
+                                      ? IconButton(
+                                          onPressed: () {
+                                            if (visible)
+                                              setState(() {
+                                                visible = false;
+                                              });
+                                            else
+                                              setState(() {
+                                                visible = true;
+                                              });
+                                          },
+                                          iconSize: 18,
+                                          icon: Icon(
+                                            visible
+                                                ? CupertinoIcons.eye
+                                                : CustomIcon.close_eye,
+                                            color: Colors.grey,
+                                          ),
+                                        )
+                                      : Container(),
                                 ],
-                              )),
-                        ),
-                      ),
-                      Divider(thickness: 1, height: 25),
-                      TextField(
-                        controller: wifiPassword,
-                        textInputAction: TextInputAction.done,
-                        onChanged: (password) {
-                          passwordValidator(password);
-                        },
-                        obscureText: !visible,
-                        obscuringCharacter: '•',
-                        style: TextStyle(fontSize: 16),
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          hintText: 'Password',
-                          suffixIcon: Padding(
-                            padding: const EdgeInsets.only(bottom: 9),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                wifiPassword.text.isNotEmpty
-                                    ? IconButton(
-                                        onPressed: () {
-                                          if (visible)
-                                            setState(() {
-                                              visible = false;
-                                            });
-                                          else
-                                            setState(() {
-                                              visible = true;
-                                            });
-                                        },
-                                        iconSize: 18,
-                                        icon: Icon(
-                                          visible
-                                              ? CupertinoIcons.eye
-                                              : CustomIcon.close_eye,
-                                          color: Colors.grey,
-                                        ),
-                                      )
-                                    : Container(),
-                              ],
+                              ),
                             ),
-                          ),
-                          prefixIcon: Padding(
-                            padding: const EdgeInsets.only(bottom: 9),
-                            child: Icon(
-                              Icons.lock_outline,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      Container(
-                        height: 40,
-                        width: double.infinity,
-                        padding: EdgeInsets.only(left: 30, right: 30),
-                        child: GestureDetector(
-                          onTap: () {
-                            validateFields();
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                                color: Colors.blue,
-                                border: Border.all(
-                                  color: Colors.blue,
-                                ),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(60))),
-                            child: Center(
-                              child: Text(
-                                'Next',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15),
+                            prefixIcon: Padding(
+                              padding: const EdgeInsets.only(bottom: 9),
+                              child: Icon(
+                                Icons.lock_outline,
+                                color: Colors.grey,
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                        SizedBox(height: 10),
+                        Container(
+                          height: 40,
+                          width: double.infinity,
+                          padding: EdgeInsets.only(left: 30, right: 30),
+                          child: GestureDetector(
+                            onTap: () {
+                              validateFields();
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: Colors.blue,
+                                  border: Border.all(
+                                    color: Colors.blue,
+                                  ),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(60))),
+                              child: Center(
+                                child: Text(
+                                  'Next',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

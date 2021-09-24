@@ -1,13 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:smartify/providers/authenticationProvider.dart';
-import 'package:smartify/providers/deviceProvider.dart';
-import 'package:smartify/screens/board_connect.dart';
 import 'package:smartify/screens/get_wifi_password_screen.dart';
-import 'package:smartify/screens/navigation_screen.dart';
-import 'package:smartify/services/user_services.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class HomeScreen extends StatefulWidget {
   static const String id = 'home-screen';
@@ -18,114 +13,151 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   String email = '', country = '';
   String boardSsid = '', boardPassword = '';
 
-  void checkBoardConnectivity() {
-    print("We are in");
-    User? user = FirebaseAuth.instance.currentUser;
-    Stream documentStream = FirebaseFirestore.instance.collection('boards').doc(user!.uid)
-        .collection("ESP8266_Board_1").doc("boardData").snapshots();
-    documentStream.listen((snapshot) {
-      print("Snapshot Type ${snapshot.runtimeType}");
-      // snapshot.data!.docs.map((DocumentSnapshot document) {
-      //   Map<String, dynamic> data = document.data()! as Map<String, dynamic>;
-      //   print("Paired: ${data["paired"]}");
-      // });
-    });
+  int nBoard = 0; //Number of boards
+  int nButtons = 0; //Number of buttons
+
+  final database = FirebaseDatabase.instance.reference();
+  late DatabaseReference mydb;
+  Map buttons = {};
+
+  User? user = FirebaseAuth.instance.currentUser;
+
+  late Stream<DocumentSnapshot> documentStream;
+
+  updateValue(bool value, String boardName, int button) async {
+    mydb = database.child('$boardName/');
+    try {
+      await mydb.child("button" + button.toString()).set(value);
+      setState(() {});
+    } catch (e) {
+      print("Got an error");
+    }
   }
 
   @override
   void initState() {
-    // TODO: implement initState
-    checkBoardConnectivity();
+    documentStream = FirebaseFirestore.instance
+        .collection('user')
+        .doc(user!.uid)
+        .snapshots();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-
-    final _authenticationProvider = Provider.of<AuthenticationProvider>(context);
-    final _deviceProvider = Provider.of<DeviceProvider>(context);
-    UserServices _userServices = UserServices();
-    User? user = FirebaseAuth.instance.currentUser;
-
-    showData() {
-      _userServices.getUserById(user!.uid).then((value) {
-        setState(() {
-          email = value.data()!["email"];
-          country = value.data()!["country"];
-        });
-        Navigator.pushNamed(context, WebSocketLed.id);
-        // FlutterWifiConnect.connectToSecureNetwork(boardSsid, boardPassword).then((value) {
-        //   if(value) {
-        //     print('true: ${FlutterWifiConnect.ssid}');
-        //   } else {
-        //     print('false: ${FlutterWifiConnect.ssid}');
-        //   }
-        // });
-      });
-    }
-
-    // Future<void> scanQRCode() async {
-    //   try {
-    //     final qrCode = await FlutterBarcodeScanner.scanBarcode(
-    //       '#ff6666',
-    //       'Cancel',
-    //       true,
-    //       ScanMode.QR,
-    //     );
-    //
-    //     if (!mounted) return;
-    //
-    //     var data = qrCode.multilineSplit();
-    //
-    //     setState(() {
-    //       boardSsid = data.elementAt(0);
-    //       boardPassword = data.elementAt(1);
-    //     });
-    //     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AddingDeviceScreen(ssid: boardSsid, password: boardPassword,)));
-    //   } on PlatformException {
-    //     print('Failed to get platform version.');
-    //   }
-    // }
-
     return Scaffold(
       appBar: AppBar(
         actions: [
           IconButton(
-            onPressed: (){
-              // scanQRCode();
+            onPressed: () {
               Navigator.pushReplacementNamed(context, GetWiFiPasswordScreen.id);
             },
             icon: Icon(Icons.add),
           )
         ],
       ),
-      body: Column(
-        children: [
-          MaterialButton(
-            onPressed: (){
-              _authenticationProvider.signOut();
-              Navigator.pushReplacementNamed(context, NavigationScreen.id);
-            },
-            child: Text('LogOut'),
-          ),
-          MaterialButton(
-            onPressed: (){
-              showData();
-              // scanQRCode();
-            },
-            child: Text('Show user Data'),
-          ),
-          Text('Country: $country'),
-          Text('email: $email'),
-          Text('ssid: $boardSsid'),
-          Text('password: $boardPassword'),
-          Text('uid: ${user!.uid}'),
-          Text("Board Name: ${_deviceProvider.deviceName}"),
-        ],
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: documentStream,
+        builder:
+            (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return Text("Error found");
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CircularProgressIndicator();
+          }
+
+          if (snapshot.data!['nBoard'] == 0) {
+            return Text("Add Device");
+          } else if (snapshot.data!['nBoard'] > 0) {
+            nBoard = snapshot.data!['nBoard'];
+            // return Text(nBoard.toString());
+          }
+
+          return Container(
+            child: ListView.builder(
+              itemCount: nBoard,
+              itemBuilder: (BuildContext context, int index) {
+                return StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('boards')
+                      .doc(user!.uid)
+                      .collection(snapshot.data!['boardNames'][index])
+                      .doc("boardData")
+                      .snapshots(),
+                  builder: (BuildContext context,
+                      AsyncSnapshot<DocumentSnapshot> snapshot1) {
+                    return StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('boardNames')
+                          .doc(snapshot.data!['boardNames'][index])
+                          .snapshots(),
+                      builder: (BuildContext context,
+                          AsyncSnapshot<DocumentSnapshot> snapshot2) {
+                        if (!snapshot1.hasData || !snapshot2.hasData)
+                          return Container();
+
+                        return Column(
+                          children: [
+                            Text("Board Name: " +
+                                snapshot.data!['boardNames'][index]),
+                            ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: snapshot1.data!['buttons'],
+                              itemBuilder: (BuildContext context, int index2) {
+                                print("index : $index2");
+                                int ind = index2 + 1;
+                                String path = snapshot.data!['boardNames']
+                                        [index] +
+                                    "/button" +
+                                    ind.toString();
+                                print(path);
+                                return StreamBuilder<Event>(
+                                  stream: database.child(path).onValue,
+                                  builder: (BuildContext context,
+                                      AsyncSnapshot<Event> event) {
+                                    buttons.update(
+                                        "button${index2+1}",
+                                        (existingValue) => () {
+                                              return event.data!.snapshot.value;
+                                            },
+                                        ifAbsent: () =>
+                                            event.data!.snapshot.value);
+
+                                    return Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(snapshot2.data!["button${index2+1}"]['name']),
+                                        Container(
+                                          child: Switch(
+                                            onChanged: (value) => updateValue(value, snapshot.data!['boardNames'][index], index2 + 1),
+                                            value: event.data!.snapshot.value,
+                                            activeColor: Colors.blue,
+                                            activeTrackColor: Colors.yellow,
+                                            inactiveThumbColor: Colors.redAccent,
+                                            inactiveTrackColor: Colors.orange,
+                                          ),
+                                        )
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }
