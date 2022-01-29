@@ -6,7 +6,7 @@ import 'package:loading_indicator/loading_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:smartify/providers/authenticationProvider.dart';
 import 'package:smartify/screens/forgot_password_screen.dart';
-import 'package:smartify/screens/home_screen.dart';
+import 'package:smartify/screens/home_screen/home_screen.dart';
 import 'package:smartify/screens/select_country_screen.dart';
 import 'package:smartify/widgets/custom_icon.dart';
 

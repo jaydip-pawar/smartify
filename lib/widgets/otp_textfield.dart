@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:smartify/constants.dart';
 import 'package:smartify/providers/authenticationProvider.dart';
-import 'package:smartify/screens/home_screen.dart';
+import 'package:smartify/screens/home_screen/home_screen.dart';
 
 class OtpTextField extends StatefulWidget {
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smartify/constants.dart';
-import 'package:smartify/screens/home_screen.dart';
+import 'package:smartify/screens/home_screen/home_screen.dart';
 import 'package:smartify/screens/login_screen.dart';
 import 'package:smartify/screens/sign_up_screen.dart';
 import 'package:smartify/widgets/license_dialog.dart';

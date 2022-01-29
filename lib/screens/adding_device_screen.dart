@@ -1,20 +1,18 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:network_info_plus/network_info_plus.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:provider/provider.dart';
 import 'package:smartify/constants.dart';
 import 'package:smartify/providers/deviceProvider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:smartify/screens/device_not_found_screen.dart';
-import 'package:smartify/screens/home_screen.dart';
-import 'package:smartify/services/user_services.dart';
+import 'package:smartify/screens/home_screen/home_screen.dart';
 import 'package:smartify/widgets/filled_track_progressbar.dart';
-import 'package:web_socket_channel/io.dart';
-import 'package:wifi_configuration_2/wifi_configuration_2.dart';
 
 bool scanning = true;
 bool registering = false;
@@ -29,183 +27,102 @@ class AddingDeviceScreen extends StatefulWidget {
 }
 
 class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
-
-  // wifi connection
-  late bool disposed;
-  String boardSSID = "Smartify";
-  String boardPassword = "12345678";
-
-  // board connection
-  late IOWebSocketChannel channel;
-  late bool connected;
+  late StreamSubscription<BluetoothDiscoveryResult> _streamSubscription;
+  List<BluetoothDiscoveryResult> results = [];
 
   var _timer;
   int seconds = 59;
   int minutes = 1;
+  late String message;
 
-  WifiConfiguration wifiConfiguration = WifiConfiguration();
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   User? user = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
-    disposed = false;
     startTimer();
-    getSSID();
+    connectWithDevice();
     super.initState();
   }
 
-  getSSID() async {
-    NetworkInfo().getWifiName().then((value) {
-      if (value != null && value != 'Smartify') {
-        setState(() {
-          scanning = true;
-          registering = false;
-          initializing = false;
-        });
-        // connectWithWifi();
-        List list = [];
-        scanWifi().then((value) {
-          value.forEach((element) {
-            list.add(element.ssid);
-          });
-          if(list.contains("Smartify")) connectWithWifi();
-          else getSSID();
-        });
-      }
-      else {
-        if(value != "" && registering) {
-          channelConnect();
+  void connectWithDevice() {
+    _streamSubscription =
+        FlutterBluetoothSerial.instance.startDiscovery().listen((r) {
+      results.add(r);
+      for (BluetoothDiscoveryResult device in results) {
+        if (device.device.name == "SMARTIFY") {
+          print("Device found");
+          _streamSubscription.cancel();
+          getDataFromBluetooth(device.device);
+          break;
         }
       }
     });
+    _streamSubscription.onDone(() {
+      connectWithDevice();
+    });
   }
 
-  Future<List> scanWifi() async {
-    return await wifiConfiguration.getWifiList();
+  Uint8List convertStringToUint8List(String str) {
+    final List<int> codeUnits = str.codeUnits;
+    final Uint8List unit8List = Uint8List.fromList(codeUnits);
+
+    return unit8List;
   }
 
-  checkBoardData() {
-
+  void getDataFromBluetooth(BluetoothDevice device) async {
     final _deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+    try {
+      await BluetoothConnection.toAddress(device.address).then((_connection) {
+        print("Successfully connected");
+        setState(() {
+          scanning = false;
+          initializing = false;
+          registering = true;
+          seconds = 59;
+          minutes = 1;
+        });
 
-    if(!disposed) {
-      print("...................................................................");
-      print("SSID: " + _deviceProvider.wifiSSID);
-      print("Password: " + _deviceProvider.wifiPassword);
-      print("...................................................................");
+        String cmd =
+            "${_deviceProvider.wifiSSID}\n${_deviceProvider.wifiPassword}\n${user!.uid}";
+        _connection.output.add(
+            convertStringToUint8List(cmd)); // Sends user credentials to ESP32
 
-      wifiConfiguration.connectToWifi(_deviceProvider.wifiSSID, _deviceProvider.wifiPassword, "com.example.smartify.smartify")
-          .then((value) {
+        _connection.input!.listen((Uint8List data) {
+          print("Now listening to the server");
+          message = String.fromCharCodes(data);
 
-        switch(value) {
-          case WifiConnectionStatus.connected:
-            // UserServices _userServices = UserServices();
-            // _userServices.fireStore.collection("user").doc(_userServices.uid).snapshots().listen((paired) {
-            //   bool status = paired["paired"];
-            //   if(status) {
-            //     Navigator.pushReplacementNamed(context, HomeScreen.id);
-            //   }
-            // });
-            checkBoardConnectivity();
-          print("Connected to user Wifi");
-            break;
+          if (processBoardData(message)) {
+            _connection.finish(); // Closing connection
+            print('Disconnecting by local host');
 
-          case WifiConnectionStatus.alreadyConnected:
-            print("alreadyConnected");
-            break;
-
-          case WifiConnectionStatus.notConnected:
-            print("notConnected");
-            checkBoardData();
-            break;
-
-          case WifiConnectionStatus.platformNotSupported:
-            print("platformNotSupported");
-            break;
-
-          case WifiConnectionStatus.profileAlreadyInstalled:
-            print("profileAlreadyInstalled");
-            break;
-
-          case WifiConnectionStatus.locationNotAllowed:
-            print("locationNotAllowed");
-            break;
-        }
-      });
-    }
-  }
-
-  channelConnect(){ //function to connect
-    if(!disposed) {
-      try{
-        channel = IOWebSocketChannel.connect("ws://192.168.0.1:81"); //channel IP : Port
-        channel.stream.listen((message) {
-          setState(() {
-            if(message == "connected"){
-              connected = true;
-              sendCmd();
-            }else if(message == "failed"){
-              sendCmd();
-            } else if(message.contains("BoardName")) {
-              print("..........................................................................................");
-              print(message);
-              print("..........................................................................................");
-              List splittedString = message.split(":");
-              if(splittedString[1] != null) {
-                final _deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
-                _deviceProvider.setDeviceName(splittedString[1]);
-                print("Board name=${splittedString[1]}");
-                channel.sink.add("close");
-
-                // wifiConfiguration.connectToWifi(_deviceProvider.wifiSSID, _deviceProvider.wifiPassword, "com.example.smartify.smartify").then((value) {
-                //   if(value == WifiConnectionStatus.connected) {
-                //     Future.delayed(Duration(seconds: 10), (){
-                //       checkBoardConnectivity();
-                //     });
-                //   }
-                // });
-                // Future.delayed(Duration(seconds: 10), (){
-                //   checkBoardConnectivity();
-                // });
-
-                scanning = false;
-                registering = false;
-                initializing = true;
-                seconds = 59;
-                minutes = 1;
-                checkBoardData();
-              }
-            }
-          });
-        },
-          onDone: () {
-            print("Web socket is closed");
             setState(() {
-              connected = false;
+              scanning = false;
+              initializing = true;
+              registering = false;
+              seconds = 59;
+              minutes = 1;
             });
-          },
-          onError: (error) {
-            print("e:"+error.toString());
-            channelConnect();
-          },);
-      }catch (_){
-        print("error on connecting to websocket.");
-        channelConnect();
-      }
+            checkBoardConnectivity();
+          }
+        }).onDone(() {
+          print('Disconnected by remote request');
+          // TODO: turn the bluetooth off later
+        });
+      });
+    } catch (exception) {
+      print('Cannot connect, exception occured');
     }
   }
 
-  Future<void> sendCmd() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    final _deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
-    String cmd = "${_deviceProvider.wifiSSID}\n${_deviceProvider.wifiPassword}\n${user!.uid}";
-    if(connected == true){
-      if(cmd.isNotEmpty) channel.sink.add(cmd);
-    }else{
-      channelConnect();
-      print("Websocket is not connected.");
+  bool processBoardData(String message) {
+    List splattedString = message.split(":");
+    if (splattedString[1] != null) {
+      final _deviceProvider =
+          Provider.of<DeviceProvider>(context, listen: false);
+      _deviceProvider.setDeviceName(splattedString[1]);
     }
+    return true;
   }
 
   void startTimer() {
@@ -214,9 +131,9 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
       setState(
         () {
           if (seconds == 0 && minutes == 0) {
-            if(scanning) {
+            if (scanning) {
               Navigator.pushReplacementNamed(context, DeviceNotFoundScreen.id);
-            } else if(registering) {
+            } else if (registering) {
               Navigator.pushReplacementNamed(context, DeviceNotFoundScreen.id);
             } else {
               Navigator.pushReplacementNamed(context, DeviceNotFoundScreen.id);
@@ -233,59 +150,8 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
     });
   }
 
-  void connectWithWifi() async {
-    if (!disposed) {
-      wifiConfiguration.connectToWifi(boardSSID, boardPassword, "com.example.smartify.smartify")
-          .then((value) {
-
-            switch(value) {
-              case WifiConnectionStatus.connected:
-                NetworkInfo().getWifiName().then((value) {
-                  if(value == "Smartify") {
-                    setState(() {
-                      scanning = false;
-                      seconds = 59;
-                      minutes = 1;
-                      registering = true;
-                    });
-                    Future.delayed(Duration(seconds: 5), (){
-                      channelConnect();
-                    });
-                  } else {
-                    getSSID();
-                  }
-                });
-                break;
-
-              case WifiConnectionStatus.alreadyConnected:
-                print("alreadyConnected");
-                break;
-
-              case WifiConnectionStatus.notConnected:
-                print("notConnected");
-                connectWithWifi();
-                break;
-
-              case WifiConnectionStatus.platformNotSupported:
-                print("platformNotSupported");
-                break;
-
-              case WifiConnectionStatus.profileAlreadyInstalled:
-                print("profileAlreadyInstalled");
-                break;
-
-              case WifiConnectionStatus.locationNotAllowed:
-                print("locationNotAllowed");
-                break;
-            }
-      });
-    }
-  }
-
   void checkBoardConnectivity() {
-    print("Listening Started");
     final _deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
-    print("Checking connectivity::::::"+_deviceProvider.deviceName);
 
     FirebaseFirestore.instance
         .collection('boards')
@@ -305,8 +171,11 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
 
   @override
   void dispose() {
-    disposed = true;
     _timer.cancel();
+    _streamSubscription.cancel();
+    scanning = true;
+    registering = false;
+    initializing = false;
     super.dispose();
   }
 
@@ -367,9 +236,11 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
                         child: AnimatedTextKit(
                           animatedTexts: [
                             RotateAnimatedText(
-                                'Ensure that the WI-FI signal is good.'),
+                                'Ensure that the Bluetooth signal is good.'),
                             RotateAnimatedText(
                                 'Ensure that the device is powered on.'),
+                            RotateAnimatedText(
+                                'Ensure that the device has an active internet connection.'),
                           ],
                           pause: Duration.zero,
                           repeatForever: true,
@@ -462,10 +333,12 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
                                     backgroundColor: Colors.blueAccent[200],
                                     child: Padding(
                                       padding: const EdgeInsets.all(4.0),
-                                      child: scanning ? CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 3,
-                                      ) : Container(),
+                                      child: scanning
+                                          ? CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 3,
+                                            )
+                                          : Container(),
                                     ),
                                   ),
                                   Expanded(
@@ -519,10 +392,12 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
                                     backgroundColor: Colors.blueAccent[200],
                                     child: Padding(
                                       padding: const EdgeInsets.all(4.0),
-                                      child: registering ? CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 3,
-                                      ) : Container(),
+                                      child: registering
+                                          ? CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 3,
+                                            )
+                                          : Container(),
                                     ),
                                   ),
                                   Expanded(
@@ -576,10 +451,12 @@ class _AddingDeviceScreenState extends State<AddingDeviceScreen> {
                                     backgroundColor: Colors.blueAccent[200],
                                     child: Padding(
                                       padding: const EdgeInsets.all(4.0),
-                                      child: initializing ? CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 3,
-                                      ) : Container(),
+                                      child: initializing
+                                          ? CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 3,
+                                            )
+                                          : Container(),
                                     ),
                                   ),
                                   Expanded(
