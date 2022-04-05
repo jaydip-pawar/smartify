@@ -139,7 +139,7 @@ class _HomeViewState extends State<HomeView> {
                                             activeToggleColor: Colors.white,
                                             switchBorder: Border.all(
                                               color: Colors.blue,
-                                              width: 1.0,
+                                              width: 1.5,
                                             ),
                                             activeColor: Colors.lightBlue,
                                             inactiveColor: Colors.white,

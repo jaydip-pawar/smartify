@@ -50,7 +50,7 @@ AppBar buildAppBar(BuildContext context, List<Map<dynamic, dynamic>> tabs) {
           child: Text(
             tab['tag'],
             style: GoogleFonts.bebasNeue(
-              fontSize: 23,
+              fontSize: 21,
               letterSpacing: 1,
             ),
           ),
