@@ -268,7 +268,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: 20,
                       child: LoadingIndicator(
                         indicatorType: Indicator.lineSpinFadeLoader,
-                        color: Colors.white,
+                        backgroundColor: Colors.white,
                       ),
                     ) : Container(),
                     loading ? SizedBox(width: 10) : Container(),

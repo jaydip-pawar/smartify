@@ -258,7 +258,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       width: 20,
                       child: LoadingIndicator(
                         indicatorType: Indicator.lineSpinFadeLoader,
-                        color: Colors.white,
+                        backgroundColor: Colors.white,
                       ),
                     ) : Container(),
                     loading ? SizedBox(width: 10) : Container(),

@@ -77,8 +77,7 @@ class AuthenticationProvider with ChangeNotifier {
   }
 
   Future<bool> sendOTP() async {
-    EmailAuth.sessionName = 'Smartify';
-    var res = await EmailAuth.sendOtp(receiverMail: email);
+    var res = await EmailAuth(sessionName: "Smartify").sendOtp(recipientMail: email);
     if(!res) {
       return false;
     } else {
@@ -87,7 +86,7 @@ class AuthenticationProvider with ChangeNotifier {
   }
 
   Future<bool> verifyOTP(String otp) async {
-    var res = EmailAuth.validate(receiverMail: email, userOTP: otp);
+    var res = EmailAuth(sessionName: "Smartify").validateOtp(recipientMail: email, userOtp: otp);
     if(!res) {
       return false;
     } else {

@@ -17,7 +17,7 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  final database = FirebaseDatabase.instance.reference();
+  final database = FirebaseDatabase.instance.ref();
   late DatabaseReference mydb;
   Map buttons = {};
 
@@ -77,9 +77,9 @@ class _HomeViewState extends State<HomeView> {
                               ['name'] +
                           "/button" +
                           ind.toString();
-                      return StreamBuilder<Event>(
+                      return StreamBuilder(
                         stream: database.child(path).onValue,
-                        builder: (BuildContext context, AsyncSnapshot<Event> event) {
+                        builder: (BuildContext context, AsyncSnapshot event) {
                           if(event.hasData) {
                             buttons.update(
                                 "button${index2 + 1}",

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:keyboard_utils/widgets.dart';
@@ -36,7 +34,7 @@ class _GetWiFiPasswordScreenState extends State<GetWiFiPasswordScreen>
   @override
   void initState() {
     getSSID();
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
     super.initState();
   }
 
@@ -56,7 +54,7 @@ class _GetWiFiPasswordScreenState extends State<GetWiFiPasswordScreen>
 
   @override
   void dispose() {
-    WidgetsBinding.instance!.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
